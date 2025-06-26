@@ -1,7 +1,7 @@
 {
   "name": "story-field-fe",
   "version": "1.0.0",
-  "main": "index.ts",
+  "main": "App.tsx",
   "scripts": {
     "start": "expo start",
     "android": "expo start --android",
@@ -9,10 +9,25 @@
     "web": "expo start --web"
   },
   "dependencies": {
+    "@emotion/native": "^11.11.0",
+    "@react-native-community/voice": "^1.1.9",
+    "@tanstack/react-query": "^5.81.2",
+    "axios": "^1.10.0",
     "expo": "~53.0.13",
+    "expo-av": "^15.1.6",
+    "expo-camera": "^16.1.8",
+    "expo-file-system": "^18.1.10",
+    "expo-location": "^18.1.5",
+    "expo-router": "^5.1.0",
+    "expo-speech": "^13.1.7",
     "expo-status-bar": "~2.2.3",
+    "lottie-react-native": "^7.2.2",
     "react": "19.0.0",
-    "react-native": "0.79.4"
+    "react-native": "0.79.4",
+    "react-native-gesture-handler": "^2.26.0",
+    "react-native-reanimated": "^3.18.0",
+    "react-native-tts": "^4.1.1",
+    "zustand": "^5.0.6"
   },
   "devDependencies": {
     "@babel/core": "^7.25.2",

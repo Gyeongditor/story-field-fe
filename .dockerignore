@@ -1,0 +1,14 @@
+node_modules
+.git
+.expo
+dist
+.expo-shared
+*.log
+.DS_Store
+Thumbs.db
+.vscode
+.idea
+*.swp
+*.swo
+.env.local
+.env.*.local 

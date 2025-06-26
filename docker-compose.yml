@@ -1,0 +1,20 @@
+version: '3.8'
+
+services:
+  story-field-fe:
+    build: .
+    ports:
+      - "8081:8081"   # Expo Dev Server
+      - "19000:19000" # Metro Bundler
+      - "19001:19001" # Metro Bundler (웹)
+      - "19002:19002" # Metro Bundler (터널)
+    volumes:
+      - .:/app
+      - /app/node_modules
+    environment:
+      - EXPO_DEVTOOLS_LISTEN_ADDRESS=0.0.0.0
+      - REACT_NATIVE_PACKAGER_HOSTNAME=0.0.0.0
+      - EXPO_USE_FAST_RESOLVER=1
+    stdin_open: true
+    tty: true
+    command: pnpm start --host lan 
