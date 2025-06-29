@@ -3,10 +3,10 @@
   "version": "1.0.0",
   "main": "App.tsx",
   "scripts": {
-    "start": "expo start",
-    "android": "expo start --android",
-    "ios": "expo start --ios",
-    "web": "expo start --web"
+    "mcp:socket": "dotenv -e .env.development -- cross-env npx -y cursor-talk-to-figma-mcp --socket",
+    "mcp:serve":  "dotenv -e .env.development -- cross-env npx -y cursor-talk-to-figma-mcp --stdio",
+    "start:dev":  "cross-env REACT_NATIVE_ENV=development expo start",
+    "dev":        "npm run mcp:socket & npm run mcp:serve & npm run start:dev"
   },
   "dependencies": {
     "@emotion/native": "^11.11.0",
@@ -32,6 +32,10 @@
   "devDependencies": {
     "@babel/core": "^7.25.2",
     "@types/react": "~19.0.10",
+    "cross-env": "^7.0.3",
+    "cursor-talk-to-figma-mcp": "^0.2.1",
+    "dotenv": "^17.0.0",
+    "dotenv-cli": "^8.0.0",
     "typescript": "~5.8.3"
   },
   "private": true
