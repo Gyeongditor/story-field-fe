@@ -10,6 +10,7 @@ export default ({ config }) => {
     ...config,
     extra: {
       FIGMA_PERSONAL_ACCESS_TOKEN: process.env.FIGMA_PERSONAL_ACCESS_TOKEN,
+      API_URL: process.env.EXPO_PUBLIC_API_URL,
       // 필요 시 추가 환경변수 작성
     },
   };
