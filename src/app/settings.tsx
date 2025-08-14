@@ -1,7 +1,10 @@
-import React from 'react';
-import { View, Text, Alert } from 'react-native';
+import React, { useState } from 'react';
+import { View, Text, Alert, ActivityIndicator } from 'react-native';
 import styled from '@emotion/native';
+import { useRouter } from 'expo-router';
 import { BottomNavigation } from '../shared/ui/BottomNavigation';
+import { logout } from '../shared/lib/auth';
+import { authActions } from '../shared/stores/authStore';
 
 const Container = styled.View`
   flex: 1;
@@ -86,12 +89,13 @@ const SettingArrow = styled.Text`
   color: #c7c7cc;
 `;
 
-const LogoutButton = styled.TouchableOpacity`
-  background-color: #ff3b30;
+const LogoutButton = styled.TouchableOpacity<{ disabled?: boolean }>`
+  background-color: ${props => props.disabled ? '#ccc' : '#ff3b30'};
   margin: 16px;
   padding: 16px;
   border-radius: 16px;
   align-items: center;
+  opacity: ${props => props.disabled ? 0.6 : 1};
 `;
 
 const LogoutText = styled.Text`
@@ -101,6 +105,9 @@ const LogoutText = styled.Text`
 `;
 
 export default function SettingsScreen() {
+  const [isLoggingOut, setIsLoggingOut] = useState(false);
+  const router = useRouter();
+
   const handleSettingPress = (setting: string) => {
     Alert.alert('준비중', `${setting} 설정 기능이 준비중입니다.`);
   };
@@ -114,10 +121,55 @@ export default function SettingsScreen() {
         { 
           text: '로그아웃', 
           style: 'destructive',
-          onPress: () => Alert.alert('로그아웃', '로그아웃되었습니다.')
+          onPress: performLogout
         },
       ]
     );
+  };
+
+  const performLogout = async () => {
+    try {
+      setIsLoggingOut(true);
+      const result = await logout();
+      
+      // Zustand Store 정리
+      authActions.logout();
+      
+      if (result.success) {
+        Alert.alert(
+          '로그아웃 완료', 
+          result.message || '로그아웃되었습니다.', 
+          [
+            { 
+              text: '확인', 
+              onPress: () => router.replace('/auth/login')
+            }
+          ]
+        );
+      } else {
+        Alert.alert(
+          '로그아웃', 
+          result.message || '로그아웃 처리 중 문제가 발생했지만 로그아웃되었습니다.',
+          [
+            { 
+              text: '확인', 
+              onPress: () => router.replace('/auth/login')
+            }
+          ]
+        );
+      }
+    } catch (error) {
+      console.error('로그아웃 예외 발생:', error);
+      Alert.alert(
+        '오류', 
+        '로그아웃 처리 중 오류가 발생했습니다. 다시 시도해주세요.',
+        [
+          { text: '확인' }
+        ]
+      );
+    } finally {
+      setIsLoggingOut(false);
+    }
   };
 
   return (
@@ -205,8 +257,15 @@ export default function SettingsScreen() {
           </SettingCard>
         </SettingSection>
 
-        <LogoutButton onPress={handleLogout}>
-          <LogoutText>로그아웃</LogoutText>
+        <LogoutButton 
+          onPress={isLoggingOut ? undefined : handleLogout} 
+          disabled={isLoggingOut}
+        >
+          {isLoggingOut ? (
+            <ActivityIndicator color="#fff" />
+          ) : (
+            <LogoutText>로그아웃</LogoutText>
+          )}
         </LogoutButton>
       </Content>
 

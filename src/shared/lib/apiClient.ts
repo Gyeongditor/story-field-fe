@@ -1,4 +1,4 @@
-import axios, { AxiosInstance } from "axios";
+import axios, { AxiosInstance, InternalAxiosRequestConfig, AxiosHeaders } from "axios";
 import Constants from "expo-constants";
 
 /**
@@ -40,19 +40,43 @@ export const apiClient: AxiosInstance = axios.create({
 
 // 요청 인터셉터: 인증 토큰 자동 추가
 apiClient.interceptors.request.use(
-  async (config) => {
-    // TODO: SecureStore 또는 Zustand 등에서 토큰 가져오기
-    const token = ""; // ex) await SecureStore.getItemAsync('accessToken');
-    if (token) {
-      config.headers.Authorization = `Bearer ${token}`;
-    }
-    // 개발 편의를 위한 요청 로그
+  async (config: InternalAxiosRequestConfig) => {
+    // Zustand Store에서 액세스 토큰 가져오기 (빠름)
     try {
-      const method = (config.method || 'GET').toUpperCase();
-      const path = typeof config.url === 'string' ? config.url : '';
-      // eslint-disable-next-line no-console
-      console.log(`[HTTP] ${method} ${config.baseURL}${path}`);
-    } catch {}
+      // 동적 import로 순환 참조 방지
+      const { useAuthStore } = await import('../../shared/stores/authStore');
+      const token = useAuthStore.getState().accessToken;
+      
+      if (token) {
+        if (!config.headers) {
+          config.headers = new AxiosHeaders();
+        }
+        config.headers.set('Authorization', token); // 이미 "Bearer " 포함된 상태로 저장됨
+      } else {
+        // fallback: AsyncStorage에서 가져오기
+        const { storage } = await import('./storage');
+        const { STORAGE_KEYS } = await import('./constants');
+        const fallbackToken = await storage.get(STORAGE_KEYS.ACCESS_TOKEN);
+        
+        if (fallbackToken && !config.headers?.get('Authorization')) {
+          if (!config.headers) {
+            config.headers = new AxiosHeaders();
+          }
+          config.headers.set('Authorization', fallbackToken as string);
+        }
+      }
+    } catch (error) {
+      console.error('토큰 로드 실패:', error);
+    }
+    
+    // HTTP 요청 로그 (간단)
+    if (__DEV__) {
+      try {
+        const method = (config.method || 'GET').toUpperCase();
+        const path = typeof config.url === 'string' ? config.url : '';
+        console.log(`[HTTP] ${method} ${config.baseURL}${path}`);
+      } catch {}
+    }
     return config;
   },
   (error) => {
@@ -61,15 +85,73 @@ apiClient.interceptors.request.use(
   }
 );
 
-// 응답 인터셉터: 공통 에러 처리
+// 응답 인터셉터: 공통 에러 처리 및 토큰 갱신
 apiClient.interceptors.response.use(
   (response) => response,
-  (error) => {
+  async (error) => {
     console.error("apiClient 응답 에러:", error);
+    
     if (error.response?.status === 401) {
-      console.log("401 Unauthorized - 로그인 필요");
-      // TODO: 로그아웃 처리 or 토큰 갱신 로직 추가
+      
+      try {
+        const { storage } = await import('./storage');
+        const { STORAGE_KEYS } = await import('./constants');
+        const refreshToken = await storage.get(STORAGE_KEYS.REFRESH_TOKEN);
+        
+        if (refreshToken && error.config && !error.config._retry) {
+          error.config._retry = true; // 무한 재시도 방지
+          
+          // 리프레시 토큰으로 새 액세스 토큰 요청 (별도 인스턴스 사용으로 무한루프 방지)
+          try {
+            const refreshClient = axios.create({
+              baseURL: BASE_URL,
+              timeout: 10000
+            });
+            
+            const refreshResponse = await refreshClient.post('/auth/refresh', {
+              refreshToken: refreshToken
+            });
+            
+            const newAccessToken = refreshResponse.data?.data?.Authorization?.[0];
+            if (newAccessToken) {
+              // Zustand Store 업데이트
+              const { authActions } = await import('../../shared/stores/authStore');
+              authActions.refreshToken(newAccessToken);
+              
+              if (!error.config.headers) {
+                error.config.headers = new AxiosHeaders();
+              }
+              error.config.headers.set('Authorization', newAccessToken as string);
+              return apiClient(error.config); // 원래 요청 재시도
+            }
+          } catch (refreshError) {
+            console.error('토큰 갱신 실패:', refreshError);
+            // 갱신 실패 시 로그아웃 처리
+            try {
+              const { authActions } = await import('../../shared/stores/authStore');
+              authActions.logout();
+            } catch (logoutError) {
+              console.error('자동 로그아웃 실패:', logoutError);
+              // 최후의 수단으로 직접 정리
+              await storage.remove(STORAGE_KEYS.ACCESS_TOKEN);
+              await storage.remove(STORAGE_KEYS.REFRESH_TOKEN);
+              await storage.remove(STORAGE_KEYS.USER_UUID);
+            }
+          }
+        } else {
+          // 토큰이 없으면 로컬 정리만 수행
+          try {
+            const { authActions } = await import('../../shared/stores/authStore');
+            authActions.logout();
+          } catch (logoutError) {
+            console.error('자동 로그아웃 실패:', logoutError);
+          }
+        }
+      } catch (storageError) {
+        console.error('스토리지 접근 실패:', storageError);
+      }
     }
+    
     return Promise.reject(error);
   }
 );

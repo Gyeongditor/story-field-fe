@@ -42,6 +42,10 @@ export const storage = {
    */
   async remove(key: string): Promise<void> {
     try {
+      if (!key || typeof key !== 'string') {
+        console.error(`[storage] 잘못된 키 (key=${key})`);
+        return;
+      }
       await AsyncStorage.removeItem(key);
     } catch (e) {
       console.error(`[storage] remove 실패 (key=${key})`, e);
@@ -58,4 +62,6 @@ export const storage = {
       console.error("[storage] clear 실패", e);
     }
   },
+
+
 };
