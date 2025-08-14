@@ -2,57 +2,82 @@ import { View, Text } from "react-native";
 import styled from "@emotion/native";
 import { Link } from "expo-router";
 import { Button } from "../shared/ui/button";
+import { BottomNavigation } from "../shared/ui/BottomNavigation";
+
 const Container = styled.View`
+  flex: 1;
+  background-color: #f8f9fa;
+`;
+
+const Content = styled.View`
   flex: 1;
   justify-content: center;
   align-items: center;
-  background-color: #ffffff;
+  padding: 32px;
 `;
 
 const Title = styled.Text`
-  font-size: 24px;
+  font-size: 32px;
   font-weight: bold;
-  margin-bottom: 20px;
-  color: #333333;
+  margin-bottom: 16px;
+  color: #1c1c1e;
+  text-align: center;
 `;
 
 const Subtitle = styled.Text`
-  font-size: 16px;
-  color: #666666;
-  margin-bottom: 30px;
+  font-size: 18px;
+  color: #8e8e93;
+  margin-bottom: 48px;
   text-align: center;
+  line-height: 24px;
+`;
+
+const ButtonContainer = styled.View`
+  width: 100%;
+  gap: 16px;
 `;
 
 const LinkButton = styled.TouchableOpacity`
   background-color: #007aff;
-  padding: 12px 24px;
-  border-radius: 8px;
-  margin: 8px;
+  padding: 16px 24px;
+  border-radius: 16px;
+  align-items: center;
+  shadow-color: #000;
+  shadow-offset: 0px 2px;
+  shadow-opacity: 0.1;
+  shadow-radius: 4px;
+  elevation: 3;
 `;
 
 const LinkText = styled.Text`
   color: white;
   font-weight: 600;
+  font-size: 16px;
 `;
 
 export default function Home() {
   return (
     <Container>
-      <Title>Story Field</Title>
-      <Subtitle>AI 기반 동화 생성 및 읽기 앱</Subtitle>
+      <Content>
+        <Title>🧚‍♀️ Story Field</Title>
+        <Subtitle>AI가 만들어주는{'\n'}특별한 동화 이야기</Subtitle>
 
-      <Link href="/auth/login" asChild>
-        <LinkButton>
-          <LinkText>로그인</LinkText>
-        </LinkButton>
-      </Link>
+        <ButtonContainer>
+          <Link href="/auth/login" asChild>
+            <LinkButton>
+              <LinkText>로그인</LinkText>
+            </LinkButton>
+          </Link>
 
-      <Link href="/stories" asChild>
-        <LinkButton>
-          <LinkText>스토리 라이브러리</LinkText>
-        </LinkButton>
-      </Link>
-      <Button title="버튼 테스트" onPress={() => console.log("버튼 눌림")} />
+          <Link href="/stories" asChild>
+            <LinkButton>
+              <LinkText>스토리 라이브러리 둘러보기</LinkText>
+            </LinkButton>
+          </Link>
+        </ButtonContainer>
+      </Content>
+      
+      <BottomNavigation />
     </Container>
   );
 }

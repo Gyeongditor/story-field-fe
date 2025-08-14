@@ -1,91 +1,144 @@
-import { View, ScrollView, Alert } from 'react-native';
+import { View, ScrollView, Alert, Text } from 'react-native';
 import styled from '@emotion/native';
 import { Link, useRouter } from 'expo-router';
 import { useState } from 'react';
+import { BottomNavigation } from '../../shared/ui/BottomNavigation';
 
 const Container = styled.View`
   flex: 1;
-  background-color: #f5f5f5;
+  background-color: #f8f9fa;
 `;
 
 const Header = styled.View`
-  background-color: #007AFF;
-  padding: 20px;
-  padding-top: 60px;
-`;
-
-const HeaderTitle = styled.Text`
-  color: white;
-  font-size: 24px;
-  font-weight: bold;
-  text-align: center;
-`;
-
-const SearchContainer = styled.View`
-  padding: 20px;
-  background-color: white;
-`;
-
-const SearchInput = styled.TextInput`
-  border: 1px solid #dddddd;
-  border-radius: 8px;
-  padding: 12px;
-  font-size: 16px;
-`;
-
-const Section = styled.View`
-  margin-bottom: 20px;
-`;
-
-const SectionTitle = styled.Text`
-  font-size: 20px;
-  font-weight: bold;
-  color: #333333;
-  padding: 0 20px 10px;
-`;
-
-const StoryCard = styled.TouchableOpacity`
-  background-color: white;
-  margin: 8px 20px;
-  border-radius: 12px;
+  background-color: #ffffff;
   padding: 16px;
-  shadow-color: #000;
-  shadow-offset: 0px 2px;
-  shadow-opacity: 0.1;
-  shadow-radius: 4px;
-  elevation: 3;
-`;
-
-const StoryTitle = styled.Text`
-  font-size: 18px;
-  font-weight: 600;
-  color: #333333;
-  margin-bottom: 8px;
-`;
-
-const StoryDescription = styled.Text`
-  font-size: 14px;
-  color: #666666;
-  margin-bottom: 8px;
-`;
-
-const StoryMeta = styled.Text`
-  font-size: 12px;
-  color: #999999;
-`;
-
-const CreateButton = styled.TouchableOpacity`
-  background-color: #007AFF;
-  margin: 20px;
-  padding: 16px;
-  border-radius: 12px;
+  padding-top: 56px;
+  border-bottom-width: 1px;
+  border-bottom-color: #e5e5e5;
+  flex-direction: row;
+  justify-content: space-between;
   align-items: center;
 `;
 
-const CreateButtonText = styled.Text`
-  color: white;
+const HeaderTitle = styled.Text`
+  color: #1c1c1e;
+  font-size: 22px;
+  font-weight: bold;
+`;
+
+const HeaderIcons = styled.View`
+  flex-direction: row;
+  gap: 8px;
+`;
+
+const HeaderIcon = styled.TouchableOpacity`
+  width: 32px;
+  height: 32px;
+  border-radius: 16px;
+  background-color: #f2f2f7;
+  align-items: center;
+  justify-content: center;
+`;
+
+const Content = styled.ScrollView`
+  flex: 1;
+  padding: 16px;
+`;
+
+const QuickActionsSection = styled.View`
+  margin-bottom: 24px;
+`;
+
+const SectionTitle = styled.Text`
   font-size: 18px;
   font-weight: 600;
+  color: #1c1c1e;
+  margin-bottom: 16px;
+`;
+
+const QuickActionsGrid = styled.View`
+  flex-direction: row;
+  flex-wrap: wrap;
+  gap: 8px;
+`;
+
+const QuickActionCard = styled.TouchableOpacity`
+  width: 48%;
+  background-color: #ffffff;
+  border-radius: 16px;
+  padding: 24px 16px;
+  align-items: center;
+  shadow-color: #000;
+  shadow-offset: 0px 1px;
+  shadow-opacity: 0.05;
+  shadow-radius: 4px;
+  elevation: 2;
+`;
+
+const QuickActionIcon = styled.Text`
+  font-size: 32px;
+  margin-bottom: 8px;
+`;
+
+const QuickActionTitle = styled.Text`
+  font-size: 14px;
+  font-weight: 600;
+  color: #1c1c1e;
+  text-align: center;
+  margin-bottom: 4px;
+`;
+
+const QuickActionSubtitle = styled.Text`
+  font-size: 12px;
+  color: #8e8e93;
+  text-align: center;
+`;
+
+const FullWidthCard = styled.TouchableOpacity`
+  background-color: #ffffff;
+  border-radius: 16px;
+  padding: 24px 16px;
+  align-items: center;
+  margin: 16px 0;
+  shadow-color: #000;
+  shadow-offset: 0px 1px;
+  shadow-opacity: 0.05;
+  shadow-radius: 4px;
+  elevation: 2;
+`;
+
+const RecommendationSection = styled.View`
+  margin-bottom: 24px;
+`;
+
+const CategoryCard = styled.TouchableOpacity`
+  background-color: #ffffff;
+  border-radius: 12px;
+  padding: 16px;
+  margin-right: 12px;
+  width: 120px;
+  align-items: center;
+  shadow-color: #000;
+  shadow-offset: 0px 1px;
+  shadow-opacity: 0.05;
+  shadow-radius: 4px;
+  elevation: 2;
+`;
+
+const CategoryIcon = styled.Text`
+  font-size: 24px;
+  margin-bottom: 8px;
+`;
+
+const CategoryTitle = styled.Text`
+  font-size: 14px;
+  font-weight: 500;
+  color: #1c1c1e;
+  text-align: center;
+`;
+
+const CategoryScrollView = styled.ScrollView`
+  padding-left: 16px;
 `;
 
 // 목업 데이터
@@ -113,60 +166,114 @@ const mockStories = [
   },
 ];
 
+// 카테고리 데이터
+const categories = [
+  { id: 'adventure', icon: '🗺️', title: '모험' },
+  { id: 'fantasy', icon: '🧚', title: '판타지' },
+  { id: 'friendship', icon: '🤝', title: '우정' },
+  { id: 'animal', icon: '🐻', title: '동물' },
+];
+
 export default function StoriesIndex() {
-  const [searchQuery, setSearchQuery] = useState('');
   const router = useRouter();
 
-  const handleStoryPress = (storyId: string) => {
-    router.push(`/stories/${storyId}`);
+  const handleQuickAction = (action: string) => {
+    switch (action) {
+      case 'new_text':
+        Alert.alert('준비중', '새 동화 만들기 기능 준비중입니다.');
+        break;
+      case 'new_voice':
+        Alert.alert('준비중', '새 동화 음성 기능 준비중입니다.');
+        break;
+      case 'my_stories':
+        Alert.alert('준비중', '내 동화(북마크) 기능 준비중입니다.');
+        break;
+      case 'my_voices':
+        Alert.alert('준비중', '내 음성(보이스) 기능 준비중입니다.');
+        break;
+      case 'recent':
+        Alert.alert('준비중', '최근 읽은 동화 기능 준비중입니다.');
+        break;
+      default:
+        break;
+    }
   };
 
-  const handleCreateStory = () => {
-    Alert.alert('동화 생성', '음성으로 생성하시겠습니까?', [
-      { text: '텍스트로 생성', onPress: () => Alert.alert('준비중', '텍스트 생성 기능 준비중입니다.') },
-      { text: '음성으로 생성', onPress: () => Alert.alert('준비중', '음성 생성 기능 준비중입니다.') },
-      { text: '취소', style: 'cancel' },
-    ]);
+  const handleCategoryPress = (categoryId: string) => {
+    Alert.alert('카테고리', `${categoryId} 카테고리 동화 목록으로 이동합니다.`);
   };
-
-  const filteredStories = mockStories.filter(story =>
-    story.title.toLowerCase().includes(searchQuery.toLowerCase()) ||
-    story.description.toLowerCase().includes(searchQuery.toLowerCase())
-  );
 
   return (
     <Container>
       <Header>
-        <HeaderTitle>스토리 라이브러리</HeaderTitle>
+        <HeaderTitle>AI 동화</HeaderTitle>
+        <HeaderIcons>
+         
+                     <HeaderIcon onPress={() => Alert.alert('메뉴', '메뉴가 열립니다.')}>
+             <Text>☰</Text>
+           </HeaderIcon>
+          <HeaderIcon onPress={() => Alert.alert('알림', '알림 기능 준비중입니다.')}>
+            <Text>🔔</Text>
+          </HeaderIcon>
+        </HeaderIcons>
       </Header>
 
-      <SearchContainer>
-        <SearchInput
-          placeholder="스토리 검색..."
-          value={searchQuery}
-          onChangeText={setSearchQuery}
-        />
-      </SearchContainer>
+      <Content showsVerticalScrollIndicator={false}>
+        <QuickActionsSection>
+          <SectionTitle>Quick Actions</SectionTitle>
+          <QuickActionsGrid>
+            <QuickActionCard onPress={() => handleQuickAction('new_text')}>
+              <QuickActionIcon>📝</QuickActionIcon>
+              <QuickActionTitle>새 동화 텍스트</QuickActionTitle>
+              <QuickActionSubtitle>새 동화(텍스트)</QuickActionSubtitle>
+            </QuickActionCard>
+            
+            <QuickActionCard onPress={() => handleQuickAction('new_voice')}>
+              <QuickActionIcon>🎤</QuickActionIcon>
+              <QuickActionTitle>새 동화 음성</QuickActionTitle>
+              <QuickActionSubtitle>새 동화(음성)</QuickActionSubtitle>
+            </QuickActionCard>
+            
+            <QuickActionCard onPress={() => handleQuickAction('my_stories')}>
+              <QuickActionIcon>🔖</QuickActionIcon>
+              <QuickActionTitle>내 동화</QuickActionTitle>
+              <QuickActionSubtitle>내 동화(북마크)</QuickActionSubtitle>
+            </QuickActionCard>
+            
+            <QuickActionCard onPress={() => handleQuickAction('my_voices')}>
+              <QuickActionIcon>🎵</QuickActionIcon>
+              <QuickActionTitle>내 음성</QuickActionTitle>
+              <QuickActionSubtitle>내 동화(보이스)</QuickActionSubtitle>
+            </QuickActionCard>
+          </QuickActionsGrid>
+          
+          <FullWidthCard onPress={() => handleQuickAction('recent')}>
+            <QuickActionIcon>📖</QuickActionIcon>
+            <QuickActionTitle>최근 읽은 동화</QuickActionTitle>
+          </FullWidthCard>
+        </QuickActionsSection>
 
-      <ScrollView>
-        <CreateButton onPress={handleCreateStory}>
-          <CreateButtonText>+ 새 동화 만들기</CreateButtonText>
-        </CreateButton>
+        <RecommendationSection>
+          <SectionTitle>추천 카테고리</SectionTitle>
+          <CategoryScrollView 
+            horizontal 
+            showsHorizontalScrollIndicator={false}
+            contentContainerStyle={{ paddingRight: 16 }}
+          >
+            {categories.map((category) => (
+              <CategoryCard
+                key={category.id}
+                onPress={() => handleCategoryPress(category.id)}
+              >
+                <CategoryIcon>{category.icon}</CategoryIcon>
+                <CategoryTitle>{category.title}</CategoryTitle>
+              </CategoryCard>
+            ))}
+          </CategoryScrollView>
+        </RecommendationSection>
+      </Content>
 
-        <Section>
-          <SectionTitle>내 동화들</SectionTitle>
-          {filteredStories.map((story) => (
-            <StoryCard
-              key={story.id}
-              onPress={() => handleStoryPress(story.id)}
-            >
-              <StoryTitle>{story.title}</StoryTitle>
-              <StoryDescription>{story.description}</StoryDescription>
-              <StoryMeta>{story.category} • {story.createdAt}</StoryMeta>
-            </StoryCard>
-          ))}
-        </Section>
-      </ScrollView>
+      <BottomNavigation />
     </Container>
   );
 } 
