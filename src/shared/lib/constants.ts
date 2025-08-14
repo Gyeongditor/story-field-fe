@@ -1,7 +1,8 @@
 /** API 관련 엔드포인트 */
 export const API_ENDPOINTS = {
   LOGIN: "/auth/login",
-  SIGNUP: "/auth/signup",
+  SIGNUP: "/users/signup",
+  VERIFY_EMAIL: "/users/verify",
   PROFILE: "/auth/profile",
   STORIES: "/stories",
 };

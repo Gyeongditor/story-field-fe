@@ -43,7 +43,7 @@ export default function Home() {
 
       <Link href="/auth/login" asChild>
         <LinkButton>
-          <LinkText>안녕</LinkText>
+          <LinkText>로그인</LinkText>
         </LinkButton>
       </Link>
 

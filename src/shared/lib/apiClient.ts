@@ -1,4 +1,5 @@
 import axios, { AxiosInstance } from "axios";
+import Constants from "expo-constants";
 
 /**
  * 공용 Axios 인스턴스
@@ -7,7 +8,26 @@ import axios, { AxiosInstance } from "axios";
  * - 공통 에러 처리
  */
 
-const BASE_URL = process.env.EXPO_PUBLIC_API_URL || "https://example.com/api";
+const resolveBaseUrl = (): string => {
+  const fromEnv = process.env.EXPO_PUBLIC_API_URL;
+  const extraUnknown: unknown = Constants?.expoConfig?.extra;
+  const extra = (typeof extraUnknown === "object" && extraUnknown !== null
+    ? (extraUnknown as Record<string, unknown>)
+    : {}) as Record<string, unknown>;
+  const fromExtra = typeof extra["API_URL"] === "string" ? (extra["API_URL"] as string) : undefined;
+  const urlRaw = fromEnv ?? fromExtra ?? "https://example.com/api";
+  const url = typeof urlRaw === "string" ? urlRaw.replace(/\/+$/, "") : "https://example.com/api";
+  if (url === "https://example.com/api") {
+    // 개발 편의를 위한 경고 로그
+    // eslint-disable-next-line no-console
+    console.warn(
+      "[apiClient] EXPO_PUBLIC_API_URL이 설정되지 않았습니다. 기본 URL(https://example.com/api)을 사용합니다. .env.development에 EXPO_PUBLIC_API_URL을 설정하세요."
+    );
+  }
+  return url;
+};
+
+const BASE_URL = resolveBaseUrl();
 
 export const apiClient: AxiosInstance = axios.create({
   baseURL: BASE_URL,
@@ -15,6 +35,7 @@ export const apiClient: AxiosInstance = axios.create({
   headers: {
     "Content-Type": "application/json",
   },
+  withCredentials: true,
 });
 
 // 요청 인터셉터: 인증 토큰 자동 추가
@@ -25,6 +46,13 @@ apiClient.interceptors.request.use(
     if (token) {
       config.headers.Authorization = `Bearer ${token}`;
     }
+    // 개발 편의를 위한 요청 로그
+    try {
+      const method = (config.method || 'GET').toUpperCase();
+      const path = typeof config.url === 'string' ? config.url : '';
+      // eslint-disable-next-line no-console
+      console.log(`[HTTP] ${method} ${config.baseURL}${path}`);
+    } catch {}
     return config;
   },
   (error) => {
