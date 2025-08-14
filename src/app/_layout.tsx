@@ -10,10 +10,12 @@ export default function RootLayout() {
   return (
     <QueryClientProvider client={queryClient}>
       <ThemeProvider theme={theme}>
-        <Stack>
-          <Stack.Screen name="index" options={{ title: "Home" }} />
-          <Stack.Screen name="auth" options={{ headerShown: false }} />
-          <Stack.Screen name="stories" options={{ headerShown: false }} />
+        <Stack screenOptions={{ headerShown: false }}>
+          <Stack.Screen name="index" />
+          <Stack.Screen name="auth" />
+          <Stack.Screen name="stories" />
+          <Stack.Screen name="create" />
+          <Stack.Screen name="settings" />
         </Stack>
         <StatusBar style="auto" />
       </ThemeProvider>
