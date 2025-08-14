@@ -1,6 +1,7 @@
 /** API 관련 엔드포인트 */
 export const API_ENDPOINTS = {
   LOGIN: "/auth/login",
+  LOGOUT: "/auth/logout",
   SIGNUP: "/users/signup",
   VERIFY_EMAIL: "/users/verify",
   PROFILE: "/auth/profile",
@@ -16,6 +17,8 @@ export const APP_LAYOUT = {
 /** 스토리지 키 */
 export const STORAGE_KEYS = {
   ACCESS_TOKEN: "accessToken",
+  REFRESH_TOKEN: "refreshToken",
+  USER_UUID: "userUUID",
   USER_PROFILE: "userProfile",
 };
 

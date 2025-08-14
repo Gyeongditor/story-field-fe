@@ -26,4 +26,11 @@ export interface LoginSuccessData {
   user: UserProfile;
 }
 
+// 실제 백엔드 응답 구조
+export interface LoginResponseData {
+  Authorization: string[];
+  "Refresh-Token": string[];
+  userUUID: string[];
+}
+
 
