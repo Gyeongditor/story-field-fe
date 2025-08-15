@@ -1,0 +1,23 @@
+name: PR AI Review
+
+on:
+  pull_request:
+    types: [opened, synchronize, reopened]
+    branches:
+      - develop   # develop으로 들어오는 PR만 리뷰
+
+permissions:
+  contents: read
+  pull-requests: write
+
+jobs:
+  ai-review:
+    # Org 공용 워크플로 호출 (버전 핀 고정 권장: @v1)
+    uses: your-org/.github/.github/workflows/ai-pr-review.yml@v1
+    secrets: inherit
+    with:
+      model: gpt-4.1-mini          # 기본은 mini
+      escalate_model: gpt-4.1      # 라벨(ai:deep) 달리면 상향
+      deep_label: "ai:deep"
+      run_on_fork: false           # 포크 PR은 기본 미실행
+      max_patch_per_file: 12000
