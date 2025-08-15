@@ -1,7 +1,11 @@
-import { View, Alert } from 'react-native';
+import { Alert, ActivityIndicator } from 'react-native';
 import styled from '@emotion/native';
-import { useState } from 'react';
-import { useRouter } from 'expo-router';
+import { useMemo, useState } from 'react';
+import { useRouter, Link } from 'expo-router';
+import { apiClient } from '../../shared/lib/apiClient';
+import { API_ENDPOINTS } from '../../shared/lib/constants';
+import type { ApiResponse } from '../../shared/types/api';
+import type { SignupRequestBody } from '../../shared/types/auth';
 
 const Container = styled.View`
   flex: 1;
@@ -47,36 +51,62 @@ const LinkText = styled.Text`
 `;
 
 export default function SignUp() {
-  const [name, setName] = useState('');
+  const [username, setUsername] = useState('');
   const [email, setEmail] = useState('');
   const [password, setPassword] = useState('');
   const [confirmPassword, setConfirmPassword] = useState('');
+  const [isSubmitting, setIsSubmitting] = useState(false);
   const router = useRouter();
 
-  const handleSignUp = () => {
-    // TODO: 실제 회원가입 로직 구현
-    if (!name || !email || !password || !confirmPassword) {
-      Alert.alert('오류', '모든 필드를 입력해주세요.');
+  const isValid = useMemo(() => {
+    if (!username || !email || !password || !confirmPassword) return false;
+    if (password !== confirmPassword) return false;
+    return true;
+  }, [username, email, password, confirmPassword]);
+
+  const handleSignUp = async (): Promise<void> => {
+    if (!isValid) {
+      Alert.alert('오류', '입력값을 다시 확인해주세요.');
       return;
     }
-    
-    if (password !== confirmPassword) {
-      Alert.alert('오류', '비밀번호가 일치하지 않습니다.');
-      return;
+
+    try {
+      setIsSubmitting(true);
+      const payload: SignupRequestBody = { email, password, username };
+      await apiClient.post<ApiResponse<unknown>>(API_ENDPOINTS.SIGNUP, payload);
+
+      Alert.alert(
+        '회원가입 완료',
+        '입력하신 이메일로 인증 링크를 보냈어요. 메일함에서 인증을 완료해 주세요.',
+        [
+          {
+            text: '확인',
+            onPress: () => router.replace('/auth/login'),
+          },
+        ]
+      );
+    } catch (error: unknown) {
+      const message =
+        (typeof error === 'object' && error !== null &&
+          // eslint-disable-next-line @typescript-eslint/no-explicit-any
+          (error as Record<string, unknown>)?.hasOwnProperty('response') &&
+          (error as Record<string, unknown> & { response?: { data?: { message?: string } } })?.response?.data?.message) ||
+        '회원가입에 실패했어요. 잠시 후 다시 시도해주세요.';
+      Alert.alert('에러', message);
+    } finally {
+      setIsSubmitting(false);
     }
-    
-    Alert.alert('회원가입 성공', '계정이 생성되었습니다!');
-    router.push('/auth/login');
   };
 
   return (
     <Container>
       <Title>회원가입</Title>
-      
+
       <Input
-        placeholder="이름"
-        value={name}
-        onChangeText={setName}
+        placeholder="사용자명"
+        value={username}
+        onChangeText={setUsername}
+        autoCapitalize="none"
       />
       
       <Input
@@ -101,10 +131,14 @@ export default function SignUp() {
         secureTextEntry
       />
       
-      <Button onPress={handleSignUp}>
-        <ButtonText>회원가입</ButtonText>
+      <Button onPress={isSubmitting ? undefined : handleSignUp} disabled={!isValid || isSubmitting}>
+        {isSubmitting ? (
+          <ActivityIndicator color="#fff" />
+        ) : (
+          <ButtonText>회원가입</ButtonText>
+        )}
       </Button>
-      
+
       <LinkText onPress={() => router.push('/auth/login')}>
         이미 계정이 있으신가요? 로그인
       </LinkText>
