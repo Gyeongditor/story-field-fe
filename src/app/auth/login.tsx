@@ -1,7 +1,14 @@
-import { View, Alert } from 'react-native';
+import { ActivityIndicator } from 'react-native';
 import styled from '@emotion/native';
-import { useState } from 'react';
+import { useMemo, useState } from 'react';
 import { useRouter } from 'expo-router';
+
+import { apiClient } from '../../shared/lib/apiClient';
+import { API_ENDPOINTS, STORAGE_KEYS } from '../../shared/lib/constants';
+import { storage } from '../../shared/lib/storage';
+import { authActions } from '../../shared/stores/authStore';
+import type { ApiResponse } from '../../shared/types/api';
+import type { LoginRequestBody, LoginResponseData } from '../../shared/types/auth';
 
 const Container = styled.View`
   flex: 1;
@@ -49,15 +56,46 @@ const LinkText = styled.Text`
 export default function Login() {
   const [email, setEmail] = useState('');
   const [password, setPassword] = useState('');
+  const [isSubmitting, setIsSubmitting] = useState(false);
   const router = useRouter();
 
-  const handleLogin = () => {
-    // TODO: 실제 로그인 로직 구현
-    if (email && password) {
-      Alert.alert('로그인 성공', '환영합니다!');
-      router.push('/stories');
-    } else {
-      Alert.alert('오류', '이메일과 비밀번호를 입력해주세요.');
+  const isValid = useMemo(() => !!email && !!password, [email, password]);
+
+  const handleLogin = async () => {
+    if (!isValid) return;
+    
+    try {
+      setIsSubmitting(true);
+      const credentials: LoginRequestBody = { email, password };
+      
+      const { data } = await apiClient.post<ApiResponse<LoginResponseData>>(
+        API_ENDPOINTS.LOGIN, 
+        credentials
+      );
+      
+      if (data?.data) {
+        const { Authorization, "Refresh-Token": RefreshToken, userUUID } = data.data;
+        
+        const accessToken = Authorization?.[0];
+        const refreshToken = RefreshToken?.[0];
+        const uuid = userUUID?.[0];
+        
+        if (accessToken && refreshToken && uuid) {
+          // Zustand Store에 저장
+          authActions.login(accessToken, refreshToken, { uuid });
+          
+          // 성공 후 이동
+          router.replace('/stories');
+        }
+      }
+    } catch (error: any) {
+      const status = error?.response?.status;
+      const message = error?.response?.data?.message;
+      
+      console.error('로그인 실패:', error);
+      // 에러 처리는 사용자에게 표시하지 않고 콘솔만
+    } finally {
+      setIsSubmitting(false);
     }
   };
 
@@ -80,8 +118,15 @@ export default function Login() {
         secureTextEntry
       />
       
-      <Button onPress={handleLogin}>
-        <ButtonText>로그인</ButtonText>
+      <Button 
+        onPress={isSubmitting ? undefined : handleLogin} 
+        disabled={!isValid || isSubmitting}
+      >
+        {isSubmitting ? (
+          <ActivityIndicator color="#fff" />
+        ) : (
+          <ButtonText>로그인</ButtonText>
+        )}
       </Button>
       
       <LinkText onPress={() => router.push('/auth/signup')}>

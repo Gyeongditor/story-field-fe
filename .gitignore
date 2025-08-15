@@ -461,4 +461,14 @@ $RECYCLE.BIN/
 # Windows shortcuts
 *.lnk
 
+<<<<<<< HEAD
 # End of https://www.toptal.com/developers/gitignore/api/git,react,reactnative,node,visualstudiocode,macos,windows
+
+# Cursor IDE
+.cursor/
+=======
+# Excluding environment files
+.env*
+
+# End of https://www.toptal.com/developers/gitignore/api/git,react,reactnative,node,visualstudiocode,macos,windows
+>>>>>>> origin/develop
