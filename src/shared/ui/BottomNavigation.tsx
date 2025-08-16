@@ -45,7 +45,7 @@ const navItems: NavItemData[] = [
   { id: 'settings', icon: '⚙️', label: 'Settings', route: '/settings' },
 ];
 
-export const BottomNavigation: React.FC = () => {
+const BottomNavigation: React.FC = () => {
   const router = useRouter();
   const pathname = usePathname();
 
@@ -76,3 +76,5 @@ export const BottomNavigation: React.FC = () => {
     </NavContainer>
   );
 };
+
+export default BottomNavigation;

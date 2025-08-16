@@ -2,7 +2,7 @@ import { View, ScrollView, Alert, Text } from 'react-native';
 import styled from '@emotion/native';
 import { useEffect, useMemo, useState } from 'react';
 import { useRouter } from 'expo-router';
-import { BottomNavigation } from '../../shared/ui/BottomNavigation';
+import BottomNavigation from '../../shared/ui/BottomNavigation';
 import { useAuthStatus } from '../../shared/hooks/useAuth';
 
 const Container = styled.View`

@@ -2,7 +2,7 @@ import React, { useState } from 'react';
 import { View, Text, Alert, ActivityIndicator } from 'react-native';
 import styled from '@emotion/native';
 import { useRouter } from 'expo-router';
-import { BottomNavigation } from '../shared/ui/BottomNavigation';
+import BottomNavigation from '../shared/ui/BottomNavigation';
 import { logout } from '../shared/lib/auth';
 import { authActions } from '../shared/stores/authStore';
 
