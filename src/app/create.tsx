@@ -2,6 +2,7 @@ import React from 'react';
 import { View, Text, Alert } from 'react-native';
 import styled from '@emotion/native';
 import { BottomNavigation } from '../shared/ui/BottomNavigation';
+import { useRouter } from 'expo-router';
 
 const Container = styled.View`
   flex: 1;
@@ -64,7 +65,16 @@ const CreateSubtitle = styled.Text`
 `;
 
 export default function CreateScreen() {
+  const router = useRouter();
   const handleCreateOption = (type: string) => {
+    if (type === '텍스트') {
+      router.push('/create/text');
+      return;
+    }
+    if (type === '음성') {
+      router.push('/create/voice');
+      return;
+    }
     Alert.alert('준비중', `${type} 생성 기능이 준비중입니다.`);
   };
 
