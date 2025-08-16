@@ -1,7 +1,7 @@
 import { ActivityIndicator } from 'react-native';
 import styled from '@emotion/native';
 import { useMemo, useState } from 'react';
-import { useRouter } from 'expo-router';
+import { Link, useRouter } from 'expo-router';
 
 import { apiClient } from '../../shared/lib/apiClient';
 import { API_ENDPOINTS, STORAGE_KEYS } from '../../shared/lib/constants';
@@ -53,6 +53,17 @@ const LinkText = styled.Text`
   margin-top: 20px;
 `;
 
+const GhostButton = styled.TouchableOpacity`
+  margin-top: 16px; /* 2 x 8 */
+  padding: 12px 16px; /* 1.5 x 8, 2 x 8 */
+  align-items: center;
+`;
+
+const GhostText = styled.Text`
+  color: #6b7280;
+  font-size: 14px;
+`;
+
 export default function Login() {
   const [email, setEmail] = useState('');
   const [password, setPassword] = useState('');
@@ -84,8 +95,8 @@ export default function Login() {
           // Zustand Store에 저장
           authActions.login(accessToken, refreshToken, { uuid });
           
-          // 성공 후 이동
-          router.replace('/stories');
+          // 성공 후 홈으로 이동
+          router.replace('/');
         }
       }
     } catch (error: any) {
@@ -132,6 +143,10 @@ export default function Login() {
       <LinkText onPress={() => router.push('/auth/signup')}>
         계정이 없으신가요? 회원가입
       </LinkText>
+
+      <GhostButton onPress={() => router.replace('/?guest=1')}>
+        <GhostText>둘러보기 (로그인 없이)</GhostText>
+      </GhostButton>
     </Container>
   );
 } 
