@@ -1,7 +1,7 @@
 import React from 'react';
 import { View, Text, Alert } from 'react-native';
 import styled from '@emotion/native';
-import { BottomNavigation } from '../shared/ui/BottomNavigation';
+import BottomNavigation from '../shared/ui/BottomNavigation';
 import { useRouter } from 'expo-router';
 
 const Container = styled.View`
