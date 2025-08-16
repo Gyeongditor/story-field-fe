@@ -40,9 +40,9 @@ export const useLogin = () => {
           // Zustand Store에 저장
           authActions.login(accessToken, refreshToken, { uuid });
           
-          // 성공 메시지와 함께 이동
+          // 성공 메시지와 함께 홈으로 이동
           Alert.alert('로그인 성공', data.message || '환영합니다!', [
-            { text: '확인', onPress: () => router.replace('/stories') }
+            { text: '확인', onPress: () => router.replace('/') }
           ]);
         }
       }
@@ -121,7 +121,11 @@ export const useAuthRestore = () => {
   
   return useQuery({
     queryKey: ['auth', 'restore'],
-    queryFn: restoreAuth,
+    // react-query v5: queryFn은 반드시 값을 반환해야 함
+    queryFn: async () => {
+      await restoreAuth();
+      return true; // 복원 완료 신호 반환
+    },
     staleTime: Infinity, // 한 번만 실행
     gcTime: 0, // 캐시하지 않음 (React Query v5에서 cacheTime -> gcTime)
   });
