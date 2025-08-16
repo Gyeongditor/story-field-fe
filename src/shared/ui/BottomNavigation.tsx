@@ -41,7 +41,7 @@ interface NavItemData {
 const navItems: NavItemData[] = [
   { id: 'home', icon: '🏠', label: 'Home', route: '/' },
   { id: 'library', icon: '📚', label: 'Library', route: '/stories' },
-  { id: 'create', icon: '⚡', label: 'Create', route: '/create' },
+  { id: 'create', icon: '⚡', label: 'Create', route: '/createStory' },
   { id: 'settings', icon: '⚙️', label: 'Settings', route: '/settings' },
 ];
 
