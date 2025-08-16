@@ -13,7 +13,7 @@ permissions:
 jobs:
   ai-review:
     # Org 공용 워크플로 호출 (버전 핀 고정 권장: @v1)
-    uses: https://github.com/Gyeongditor/.github/.github/workflows/ai-pr-review.yml@v1
+    uses: Gyeongditor/.github/.github/workflows/ai-pr-review.yml@v1
     secrets: inherit
     with:
       model: gpt-4.1-mini          # 기본은 mini
