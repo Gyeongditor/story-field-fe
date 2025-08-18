@@ -9,107 +9,137 @@ const Container = styled.View`
 `;
 
 const Header = styled.View`
-  background-color: #007AFF;
-  padding: 20px;
-  padding-top: 60px;
   flex-direction: row;
   align-items: center;
+  padding: 16px;
+  border-bottom-width: 1px;
+  border-bottom-color: #f0f0f0;
+  padding-top: 60px;
 `;
 
 const BackButton = styled.TouchableOpacity`
-  margin-right: 15px;
+  padding: 8px;
+  margin-right: 16px;
 `;
 
 const BackButtonText = styled.Text`
-  color: white;
   font-size: 18px;
+  font-weight: 600;
+  color: #1f1f1f;
 `;
 
 const HeaderTitle = styled.Text`
-  color: white;
-  font-size: 20px;
-  font-weight: bold;
+  font-size: 18px;
+  font-weight: 600;
+  color: #1f1f1f;
   flex: 1;
 `;
 
 const Content = styled.ScrollView`
-  padding: 20px;
+  padding: 24px;
+`;
+
+const StoryImage = styled.View`
+  width: 100%;
+  height: 240px;
+  border-radius: 16px;
+  background-color: #f3f4f6;
+  margin-bottom: 24px;
+  align-items: center;
+  justify-content: center;
+  shadow-color: #000;
+  shadow-offset: 0px 4px;
+  shadow-opacity: 0.1;
+  shadow-radius: 8px;
+  elevation: 4;
+`;
+
+const PlaceholderIcon = styled.Text`
+  font-size: 64px;
+  color: #9ca3af;
 `;
 
 const StoryTitle = styled.Text`
-  font-size: 24px;
-  font-weight: bold;
-  color: #333333;
-  margin-bottom: 10px;
+  font-size: 28px;
+  font-weight: 700;
+  color: #1f1f1f;
+  margin-bottom: 8px;
+  line-height: 36px;
 `;
 
 const StoryMeta = styled.Text`
   font-size: 14px;
-  color: #666666;
-  margin-bottom: 20px;
+  color: #6b7280;
+  margin-bottom: 24px;
 `;
 
 const StoryContent = styled.Text`
   font-size: 16px;
-  line-height: 24px;
-  color: #333333;
-  margin-bottom: 30px;
+  line-height: 28px;
+  color: #374151;
+  margin-bottom: 32px;
 `;
 
 const ControlsContainer = styled.View`
-  background-color: #f8f8f8;
-  padding: 20px;
-  border-top-left-radius: 20px;
-  border-top-right-radius: 20px;
+  background-color: #f9fafb;
+  padding: 24px;
+  border-top-left-radius: 24px;
+  border-top-right-radius: 24px;
+  border-top-width: 1px;
+  border-top-color: #f0f0f0;
 `;
 
 const ControlRow = styled.View`
   flex-direction: row;
   justify-content: space-between;
   align-items: center;
-  margin-bottom: 15px;
+  gap: 8px;
 `;
 
 const ControlButton = styled.TouchableOpacity`
-  background-color: #007AFF;
-  padding: 12px 20px;
+  background-color: #3b82f6;
+  padding: 16px;
   border-radius: 8px;
   flex: 1;
-  margin: 0 5px;
+  align-items: center;
 `;
 
 const ControlButtonText = styled.Text`
   color: white;
   text-align: center;
   font-weight: 600;
+  font-size: 14px;
 `;
 
 const VoiceSelector = styled.View`
-  margin-bottom: 15px;
+  margin-bottom: 24px;
 `;
 
 const VoiceLabel = styled.Text`
   font-size: 16px;
   font-weight: 600;
-  color: #333333;
-  margin-bottom: 10px;
+  color: #1f1f1f;
+  margin-bottom: 12px;
 `;
 
 const VoiceOptions = styled.View`
   flex-direction: row;
   flex-wrap: wrap;
+  gap: 8px;
 `;
 
 const VoiceOption = styled.TouchableOpacity<{ selected: boolean }>`
-  background-color: ${props => props.selected ? '#007AFF' : '#e0e0e0'};
-  padding: 8px 12px;
-  border-radius: 6px;
-  margin: 4px;
+  background-color: ${props => props.selected ? '#3b82f6' : '#f3f4f6'};
+  padding: 12px 16px;
+  border-radius: 8px;
+  border-width: 1px;
+  border-color: ${props => props.selected ? '#3b82f6' : '#e5e7eb'};
 `;
 
 const VoiceOptionText = styled.Text<{ selected: boolean }>`
-  color: ${props => props.selected ? 'white' : '#333333'};
+  color: ${props => props.selected ? 'white' : '#374151'};
   font-size: 14px;
+  font-weight: 500;
 `;
 
 // 목업 데이터
@@ -120,6 +150,31 @@ const mockStoryData: Record<string, {
   content: string;
 }> = {
   '1': {
+    title: '방금 생성된 나만의 동화',
+    category: '새로 만든 이야기',
+    createdAt: new Date().toLocaleDateString('ko-KR'),
+    content: `🎭 **여러분만의 특별한 동화가 완성되었습니다!**
+
+방금 전 입력해주신 내용을 바탕으로 AI가 창작한 동화입니다.
+
+📖 **이야기의 시작**
+여러분이 선택한 주인공과 함께 떠나는 특별한 모험이 시작됩니다. 
+
+선택하신 분위기와 그림체, 그리고 사투리가 어우러져 더욱 생동감 넘치는 이야기가 되었어요.
+
+🌟 **마법 같은 순간들**
+이 동화에는 여러분의 상상력과 따뜻한 마음이 가득 담겨 있습니다. 
+
+매 페이지마다 새로운 발견과 감동이 기다리고 있어요.
+
+🎨 **나만의 스타일**
+입력해주신 모든 요소들이 하나의 완성된 작품으로 탄생했습니다.
+
+✨ **여러분만의 특별한 동화 여행이 지금 시작됩니다!**
+
+언제든지 새로운 동화를 만들어 더 많은 상상의 세계를 탐험해 보세요!`,
+  },
+  '2': {
     title: '용감한 토끼의 모험',
     category: '모험',
     createdAt: '2024-01-15',
@@ -158,7 +213,7 @@ export default function StoryDetail() {
       <Container>
         <Header>
           <BackButton onPress={() => router.back()}>
-            <BackButtonText>← 뒤로</BackButtonText>
+            <BackButtonText>‹</BackButtonText>
           </BackButton>
           <HeaderTitle>스토리를 찾을 수 없습니다</HeaderTitle>
         </Header>
@@ -186,12 +241,16 @@ export default function StoryDetail() {
     <Container>
       <Header>
         <BackButton onPress={() => router.back()}>
-          <BackButtonText>← 뒤로</BackButtonText>
+          <BackButtonText>‹</BackButtonText>
         </BackButton>
         <HeaderTitle>동화 읽기</HeaderTitle>
       </Header>
 
       <Content>
+        <StoryImage>
+          <PlaceholderIcon>🏰</PlaceholderIcon>
+        </StoryImage>
+        
         <StoryTitle>{story.title}</StoryTitle>
         <StoryMeta>{story.category} • {story.createdAt}</StoryMeta>
         <StoryContent>{story.content}</StoryContent>

@@ -1,8 +1,7 @@
 import React from 'react';
-import { View, Text, Alert } from 'react-native';
+import { View } from 'react-native';
 import styled from '@emotion/native';
-import { BottomNavigation } from '../shared/ui/BottomNavigation';
-import { useRouter } from 'expo-router';
+import BottomNavigation from '../../../shared/ui/BottomNavigation';
 
 const Container = styled.View`
   flex: 1;
@@ -64,20 +63,11 @@ const CreateSubtitle = styled.Text`
   text-align: center;
 `;
 
-export default function CreateScreen() {
-  const router = useRouter();
-  const handleCreateOption = (type: string) => {
-    if (type === '텍스트') {
-      router.push('/create/text');
-      return;
-    }
-    if (type === '음성') {
-      router.push('/create/voice');
-      return;
-    }
-    Alert.alert('준비중', `${type} 생성 기능이 준비중입니다.`);
-  };
+interface CreatePageProps {
+  onCreateOption: (type: string) => void;
+}
 
+export const CreatePage: React.FC<CreatePageProps> = ({ onCreateOption }) => {
   return (
     <Container>
       <Header>
@@ -85,13 +75,13 @@ export default function CreateScreen() {
       </Header>
 
       <Content>
-        <CreateCard onPress={() => handleCreateOption('텍스트')}>
+        <CreateCard onPress={() => onCreateOption('텍스트')}>
           <CreateIcon>📝</CreateIcon>
           <CreateTitle>텍스트로 만들기</CreateTitle>
           <CreateSubtitle>키워드나 문장으로{'\n'}동화를 생성해보세요</CreateSubtitle>
         </CreateCard>
 
-        <CreateCard onPress={() => handleCreateOption('음성')}>
+        <CreateCard onPress={() => onCreateOption('음성')}>
           <CreateIcon>🎤</CreateIcon>
           <CreateTitle>음성으로 만들기</CreateTitle>
           <CreateSubtitle>목소리로 이야기하면{'\n'}동화로 만들어드려요</CreateSubtitle>
@@ -101,4 +91,4 @@ export default function CreateScreen() {
       <BottomNavigation />
     </Container>
   );
-}
+};
