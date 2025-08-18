@@ -17,7 +17,5 @@ jobs:
     secrets: inherit
     with:
       model: gpt-4.1-mini          # 기본은 mini
-      escalate_model: gpt-4.1      # 라벨(ai:deep) 달리면 상향
-      deep_label: "ai:deep"
       run_on_fork: false           # 포크 PR은 기본 미실행
       max_patch_per_file: 12000
