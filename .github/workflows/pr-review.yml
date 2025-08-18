@@ -18,4 +18,4 @@ jobs:
     with:
       model: gpt-4.1-mini          # 기본은 mini
       run_on_fork: false           # 포크 PR은 기본 미실행
-      max_patch_per_file: 12000
+      max_patch_per_file: 4000
