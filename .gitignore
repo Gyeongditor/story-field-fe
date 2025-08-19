@@ -466,7 +466,6 @@ $RECYCLE.BIN/
 # Excluding environment files
 .env*
 
-# Cursor rules - 특정 파일만 제외
-.cursor/rules/my-awesome-frontend-rule.mdc
+
 
 # End of https://www.toptal.com/developers/gitignore/api/git,react,reactnative,node,visualstudiocode,macos,windows
