@@ -105,12 +105,14 @@ interface SettingsPageProps {
   onSettingPress: (setting: string) => void;
   onLogout: () => void;
   isLoggingOut: boolean;
+  isAuthenticated: boolean;
 }
 
 export const SettingsPage: React.FC<SettingsPageProps> = ({
   onSettingPress,
   onLogout,
-  isLoggingOut
+  isLoggingOut,
+  isAuthenticated
 }) => {
   return (
     <Container>
@@ -197,16 +199,35 @@ export const SettingsPage: React.FC<SettingsPageProps> = ({
           </SettingCard>
         </SettingSection>
 
-        <LogoutButton 
-          onPress={isLoggingOut ? undefined : onLogout} 
-          disabled={isLoggingOut}
-        >
-          {isLoggingOut ? (
-            <ActivityIndicator color="#fff" />
-          ) : (
-            <LogoutText>로그아웃</LogoutText>
-          )}
-        </LogoutButton>
+        {/* 로그인된 상태에서만 로그아웃 버튼 표시 */}
+        {isAuthenticated && (
+          <LogoutButton 
+            onPress={isLoggingOut ? undefined : onLogout} 
+            disabled={isLoggingOut}
+          >
+            {isLoggingOut ? (
+              <ActivityIndicator color="#fff" />
+            ) : (
+              <LogoutText>로그아웃</LogoutText>
+            )}
+          </LogoutButton>
+        )}
+        
+        {/* 게스트 모드일 때 로그인 안내 */}
+        {!isAuthenticated && (
+          <SettingSection>
+            <SettingCard>
+              <SettingItem onPress={() => onSettingPress('로그인')}>
+                <SettingIcon>🔐</SettingIcon>
+                <SettingTextContainer>
+                  <SettingTitle>로그인</SettingTitle>
+                  <SettingSubtitle>더 많은 기능을 이용하세요</SettingSubtitle>
+                </SettingTextContainer>
+                <SettingArrow>›</SettingArrow>
+              </SettingItem>
+            </SettingCard>
+          </SettingSection>
+        )}
       </Content>
 
       <BottomNavigation />

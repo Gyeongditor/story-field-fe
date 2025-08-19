@@ -3,7 +3,7 @@ import styled from '@emotion/native';
 import { useEffect, useMemo, useState } from 'react';
 import { useRouter } from 'expo-router';
 import BottomNavigation from '../../shared/ui/BottomNavigation';
-import { useAuthStatus } from '../../shared/hooks/useAuth';
+import { useAuthStatus } from '../../features/auth';
 
 const Container = styled.View`
   flex: 1;
