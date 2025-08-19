@@ -16,13 +16,7 @@ const resolveBaseUrl = (): string => {
     const platform = Platform?.OS ?? 'unknown';
     const executionEnvironment = Constants?.executionEnvironment ?? 'unknown';
     
-    console.log("[apiClient] 🔍 환경 상세 정보:", { 
-      isDevice, 
-      platform, 
-      executionEnvironment,
-      constantsExists: !!Constants,
-      platformExists: !!Platform 
-    });
+
     
     // iOS 시뮬레이터 감지 (여러 조건 체크)
     const isIOSSimulator = (
@@ -31,33 +25,27 @@ const resolveBaseUrl = (): string => {
     );
     
     if (isIOSSimulator) {
-      console.log("[apiClient] ✅ iOS 시뮬레이터 감지 - localhost 사용");
       return "http://localhost:9080";
     } 
     
     // 실제 기기 감지
     if (isDevice && platform === 'ios') {
-      console.log("[apiClient] ✅ 실제 iPhone 감지 - IP 주소 사용");
       return "http://192.168.200.196:9080";
     }
     
     // Android 처리
     if (platform === 'android') {
       if (isDevice) {
-        console.log("[apiClient] ✅ 실제 Android 기기 - IP 주소 사용");
         return "http://192.168.200.196:9080";
       } else {
-        console.log("[apiClient] ✅ Android 에뮬레이터 - 특수 IP 사용");
         return "http://10.0.2.2:9080"; // Android 에뮬레이터 전용
       }
     }
     
     // 기본값: localhost
-    console.log("[apiClient] ⚠️ 기본값 사용 - localhost");
     return "http://localhost:9080";
     
   } catch (error) {
-    console.error("[apiClient] 🚨 환경 감지 실패:", error);
     return "http://localhost:9080";
   }
 };
@@ -101,23 +89,13 @@ apiClient.interceptors.request.use(
         }
       }
     } catch (error) {
-      console.error('토큰 로드 실패:', error);
+      // 토큰 로드 실패 무시
     }
     
-    // HTTP 요청 로그 (상세)
-    if (__DEV__) {
-      try {
-        const method = (config.method || 'GET').toUpperCase();
-        const path = typeof config.url === 'string' ? config.url : '';
-        console.log(`🌐 [HTTP REQUEST] ${method} ${config.baseURL}${path}`);
-        console.log('📤 Headers:', JSON.stringify(config.headers, null, 2));
-        console.log('📤 Data:', config.data);
-      } catch {}
-    }
+
     return config;
   },
   (error) => {
-    console.error("apiClient 요청 에러:", error);
     return Promise.reject(error);
   }
 );
@@ -125,48 +103,42 @@ apiClient.interceptors.request.use(
 // 응답 인터셉터: 공통 에러 처리 및 토큰 갱신
 apiClient.interceptors.response.use(
   (response) => {
-    // 성공 응답 로그
-    if (__DEV__) {
-      console.log(`✅ [HTTP RESPONSE] ${response.status} ${response.config.method?.toUpperCase()} ${response.config.url}`);
-      console.log('📥 Response Data:', response.data);
-    }
     return response;
   },
   async (error) => {
-    // 에러 응답 상세 로그
-    if (__DEV__) {
-      console.error(`❌ [HTTP ERROR] ${error.response?.status || 'Network'} ${error.config?.method?.toUpperCase()} ${error.config?.url}`);
-      console.error('📥 Error Response:', error.response?.data);
-      console.error('📥 Error Headers:', error.response?.headers);
-    }
-    console.error("apiClient 응답 에러:", error);
-    
     if (error.response?.status === 401) {
       
       try {
-        const { storage } = await import('./storage');
-        const { STORAGE_KEYS } = await import('./constants');
-        const refreshToken = await storage.get(STORAGE_KEYS.REFRESH_TOKEN);
-        
-        if (refreshToken && error.config && !error.config._retry) {
+        // 백엔드 시스템: 로그아웃 후 AT가 블랙리스트에 추가되어 접근 불가
+        // 또는 AT가 만료되어 재발급이 필요한 상황
+        if (error.config && !error.config._retry) {
           error.config._retry = true; // 무한 재시도 방지
           
-          // 리프레시 토큰으로 새 액세스 토큰 요청 (별도 인스턴스 사용으로 무한루프 방지)
+          // 쿠키 기반 토큰 재발급 요청 (별도 인스턴스 사용으로 무한루프 방지)
           try {
             const refreshClient = axios.create({
               baseURL: BASE_URL,
-              timeout: 10000
+              timeout: 10000,
+              withCredentials: true, // 쿠키 자동 전송
             });
             
-            const refreshResponse = await refreshClient.post('/auth/refresh', {
-              refreshToken: refreshToken
-            });
+            const refreshResponse = await refreshClient.post('/auth/reissue');
             
-            const newAccessToken = refreshResponse.data?.data?.Authorization?.[0];
+            // 응답 헤더에서 새로운 토큰 정보 추출
+            const { extractAuthFromHeaders } = await import('./headerUtils');
+            const { accessToken: newAccessToken, refreshToken: newRefreshToken } = extractAuthFromHeaders(refreshResponse.headers);
+            
             if (newAccessToken) {
               // Zustand Store 업데이트
               const { authActions } = await import('../../shared/stores/authStore');
               authActions.refreshToken(newAccessToken);
+              
+              // 새 refreshToken이 있으면 업데이트 (쿠키는 자동으로 설정되지만 로컬에도 저장)
+              if (newRefreshToken) {
+                const { storage } = await import('./storage');
+                const { STORAGE_KEYS } = await import('./constants');
+                await storage.set(STORAGE_KEYS.REFRESH_TOKEN, newRefreshToken);
+              }
               
               if (!error.config.headers) {
                 error.config.headers = new AxiosHeaders();
@@ -175,14 +147,14 @@ apiClient.interceptors.response.use(
               return apiClient(error.config); // 원래 요청 재시도
             }
           } catch (refreshError) {
-            console.error('토큰 갱신 실패:', refreshError);
             // 갱신 실패 시 로그아웃 처리
             try {
               const { authActions } = await import('../../shared/stores/authStore');
               authActions.logout();
             } catch (logoutError) {
-              console.error('자동 로그아웃 실패:', logoutError);
               // 최후의 수단으로 직접 정리
+              const { storage } = await import('./storage');
+              const { STORAGE_KEYS } = await import('./constants');
               await storage.remove(STORAGE_KEYS.ACCESS_TOKEN);
               await storage.remove(STORAGE_KEYS.REFRESH_TOKEN);
               await storage.remove(STORAGE_KEYS.USER_UUID);
@@ -194,11 +166,11 @@ apiClient.interceptors.response.use(
             const { authActions } = await import('../../shared/stores/authStore');
             authActions.logout();
           } catch (logoutError) {
-            console.error('자동 로그아웃 실패:', logoutError);
+            // 로그아웃 실패 무시
           }
         }
       } catch (storageError) {
-        console.error('스토리지 접근 실패:', storageError);
+        // 스토리지 접근 실패 무시
       }
     }
     
