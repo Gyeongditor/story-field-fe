@@ -1,12 +1,7 @@
 import { useMutation, useQuery, useQueryClient } from '@tanstack/react-query';
 import { useRouter } from 'expo-router';
-import { Alert } from 'react-native';
-import { apiClient } from '../lib/apiClient';
-import { API_ENDPOINTS } from '../lib/constants';
-import { useAuthStore, authActions } from '../stores/authStore';
-import { logout as logoutService } from '../lib/auth';
-import type { LoginRequestBody, LoginResponseData } from '../types/auth';
-import type { ApiResponse } from '../types/api';
+import { loginUser, logoutUser, getUserProfile, type LoginCredentials } from '../../../entities/user';
+import { useAuthStore, authActions } from '../../../shared/stores/authStore';
 
 // Query Keys
 export const AUTH_QUERY_KEYS = {
@@ -21,41 +16,12 @@ export const useLogin = () => {
   const router = useRouter();
   
   return useMutation({
-    mutationFn: async (credentials: LoginRequestBody) => {
-      const { data } = await apiClient.post<ApiResponse<LoginResponseData>>(
-        API_ENDPOINTS.LOGIN, 
-        credentials
-      );
-      return data;
+    mutationFn: async (credentials: LoginCredentials) => {
+      return await loginUser(credentials);
     },
-    onSuccess: (data) => {
-      if (data?.data) {
-        const { Authorization, "Refresh-Token": RefreshToken, userUUID } = data.data;
-        
-        const accessToken = Authorization?.[0];
-        const refreshToken = RefreshToken?.[0];
-        const uuid = userUUID?.[0];
-        
-        if (accessToken && refreshToken && uuid) {
-          // Zustand Store에 저장
-          authActions.login(accessToken, refreshToken, { uuid });
-          
-          // 성공 메시지와 함께 홈으로 이동
-          Alert.alert('로그인 성공', data.message || '환영합니다!', [
-            { text: '확인', onPress: () => router.replace('/') }
-          ]);
-        }
-      }
-    },
-    onError: (error: any) => {
-      const status = error?.response?.status;
-      const message = error?.response?.data?.message;
-      
-      if (status === 401) {
-        Alert.alert('로그인 실패', message || '이메일 또는 비밀번호가 올바르지 않습니다.');
-      } else {
-        Alert.alert('오류', message || '로그인 중 문제가 발생했습니다.');
-      }
+    onSuccess: ({ tokens, user }) => {
+      // Zustand Store에 저장
+      authActions.login(tokens.accessToken, tokens.refreshToken, user);
     },
   });
 };
@@ -68,7 +34,9 @@ export const useLogout = () => {
   const queryClient = useQueryClient();
   
   return useMutation({
-    mutationFn: logoutService,
+    mutationFn: async () => {
+      return await logoutUser(); // 쿠키 기반이므로 refreshToken 매개변수 불필요
+    },
     onSuccess: () => {
       // Zustand Store 정리
       authActions.logout();
@@ -76,8 +44,10 @@ export const useLogout = () => {
       // React Query 캐시 정리
       queryClient.clear();
       
-      // 로그인 화면으로 이동
-      router.replace('/auth/login');
+      // 로그인 화면으로 이동 
+      setTimeout(() => {
+        router.push('/auth/login');
+      }, 100);
     },
   });
 };
@@ -91,8 +61,7 @@ export const useProfile = () => {
   return useQuery({
     queryKey: AUTH_QUERY_KEYS.profile,
     queryFn: async () => {
-      const { data } = await apiClient.get(API_ENDPOINTS.PROFILE);
-      return data;
+      return await getUserProfile();
     },
     enabled: isAuthenticated, // 로그인된 경우에만 실행
     staleTime: 5 * 60 * 1000, // 5분간 캐시 유지

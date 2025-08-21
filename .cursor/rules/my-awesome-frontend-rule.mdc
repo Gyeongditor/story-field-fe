@@ -1,0 +1,298 @@
+---
+description: 
+globs: 
+alwaysApply: true
+---
+# [Github] Branch 전략
+
+## 브랜치 타입
+
+### 작업 진행 준비(25/06/29 기준)
+
+1. 이슈 생성 (이슈 템플릿 추후 생성)
+2. 이슈 해결을 위한 커밋들은 브랜치를 생성해서 분리된 영역에서 작업
+**⇒ 아래 표는 이 때 지켜야하는 브랜치 이름 컨벤션에 대한 내용임**
+3. 브랜치에서 작업한 커밋은 [커밋컨벤션](mdc:https:/www.notion.so/Github-Commit-convention-20fbd7dc62af807eaa6bd126db1f7e1c?pvs=21) 준수
+
+|                          **타입** |                          **설명** |                          **예시** |
+| --- | --- | --- |
+| main | 항상 배포 가능한 최종 코드
+추후 브랜치 프로텍션 적용 예정 | main |
+| develop | 다음 배포를 준비하는 통합 브랜치
+로컬 테스트 완료 후 커밋해야 함 | develop |
+| feature | 신규 “기능” 개발 | feature/이슈번호-업무단위-기능단위-세부단위(Optional) |
+| task | 기능은 아니지만 수행해야 할 작업
+(MCP 설정, 문서 업데이트 등) | task/이슈번호-작업타입-업무단위-세부설명(Optional) |
+| bugfix | 버그 수정 | bugfix/이슈번호-[대상레포][기존이슈번호]-설명 |
+| hotfix | 운영 중 긴급 수정 | hotfix/문제-상황-설명 |
+
+### Commit 타입 정의 (수정 및 추가가 필요하면 의견내주세요)
+
+- “태그: 커밋메세지내용”의 형태
+
+| **Commit Type (TAG)** | **설명** |
+| --- | --- |
+| Feat | 새로운 기능 추가 |
+| Fix | 버그 수정 |
+| Docs | 문서 수정 (README, Swagger,, etc) |
+| Style | 코드 포맷팅, 세미콜론 누락 (코드 변경이 없는 경우) |
+| Refactor | 코드 리펙토링 |
+| Test | 테스트 코드 |
+| Chore | 빌드 업무 수정, 패키지 매니저 수정
+파일명/폴더명 수정 또는 옮기는 경우 |
+| Comment | 주석 추가 및 변경 |
+| Remove | 파일 삭제 |
+| Urgent | 긴급 |
+
+### Commit Message 전문 및 예제
+
+```json
+#[이슈번호] [커밋타입(첫글자대문자)]: [커밋메세지]
+
+ex)
+#6 Feat: 카카오 회원 로그인 기능 구현
+#33 Style: interface 카멜 케이스에서 파스칼 케이스로 변경
+```
+
+## 이슈 컨벤션 
+
+### 이슈 제목
+
+```jsx
+## 🧱 1. 주요 이슈 (버그, 기능, 리팩토링 등)
+
+| 목적 | 예시 |
+|------|------|
+| 🐞 버그 수정 | `fix: 로그인 시 500 에러 발생` |
+| ✨ 기능 추가 | `feat: 유저 프로필 페이지 구현` |
+| 🧼 코드 리팩토링 | `refactor: 중복된 로직 유틸 함수로 분리` |
+| 📚 문서 업데이트 | `docs: README에 로컬 실행 방법 추가` |
+| 🧪 테스트 코드 | `test: 게시글 API 단위 테스트 추가` |
+| ⚙ 설정 변경 | `chore: ESLint 룰 수정` |
+
+---
+
+## 🔧 2. 소소한 실수/잡일성 이슈
+
+| 상황 | 예시 |
+|------|------|
+| 🔀 충돌 발생 | `chore: develop 머지 중 충돌 해결 필요` |
+| 📂 경로 실수 | `chore: 이미지 경로 오타 수정` |
+| 🧹 파일 정리 | `chore: 불필요한 주석 제거` |
+| 🪛 빌드 이슈 | `fix: 로컬 빌드 오류 수정 (환경변수 누락)` |
+| 💻 개발환경 대응 | `chore: Mac 환경에서 포트 충돌 발생` |
+| 🧾 단순 설정 | `chore: .env.example에 빠진 값 추가` |
+
+> 📌 이럴 땐 굳이 `feat:`이나 `fix:` 안 써도 되고, `chore:` 또는 생략해도 OK!
+
+---
+
+## 💬 3. 의견 공유/팀원 피드백 요청용 이슈
+
+| 상황 | 예시 |
+|------|------|
+| 🤔 질문 | `질문: 로그인 로직 이대로 괜찮을까요?` |
+| 💬 피드백 요청 | `피드백 요청: 마이페이지 UI 초안 확인 부탁드립니다` |
+| ⚖️ 선택 고민 | `의견 구함: API 응답 포맷 이대로 갈지 말지` |
+| 🧠 회의 전 공유 | `공유: 기능 구조 정리안 초안` |
+| 🧩 논의 필요 | `논의: 에러 처리 공통화 방식에 대해` |
+
+> 📌 이런 제목은 꼭 프리픽스 없이 자연어처럼 써도 괜찮아!  
+> → 대신 내용은 간단하게 써두면 좋고, 라벨을 붙이면 분류에 도움돼.
+
+---
+
+## ✅ 요약: 이슈 제목 패턴 한눈에 보기
+
+| 상황 | 패턴 예시 |
+|------|-----------|
+| 주요 기능/버그 | `fix: ~`, `feat: ~`, `refactor: ~` |
+| 사소한 작업 | `chore: ~`, `파일 정리: ~`, `오타 수정: ~` |
+| 의견/질문 | `질문: ~`, `의견 구함: ~`, `피드백 요청: ~` |
+
+```
+
+### 간단한 이슈
+
+```jsx
+## 📝 이슈 요약
+<!-- ex: 경로 수정 필요 / 주석 정리 / 충돌 해결 등 간단한 설명 -->
+
+## 🧾 발생 배경
+<!-- 상황을 간단히 설명해주세요 -->
+<!-- ex: 코드 리뷰 중 발견 / 커밋 실수 / 설정 누락 등 -->
+
+## 🔧 작업 내용
+- [ ] 할 일 1
+- [ ] 할 일 2 (선택)
+
+## 💬 참고 사항 (선택)
+<!-- 공유하고 싶은 내용이나 메모, 관련 히스토리 -->
+```
+
+### 큰 이슈(ex. 버그, 리펙토링 등)
+
+```jsx
+## 📝 이슈 요약
+<!-- ex: 로그인 실패 시 500 오류 발생 / 게시판 페이징 로직 개선 등 명확한 요약 -->
+
+## 📂 이슈 유형
+- [ ] 🐞 버그
+- [ ] ✨ 기능 추가
+- [ ] 🔨 리팩토링
+- [ ] 🧹 코드 정리
+- [ ] 📄 문서 작성
+- [ ] ❓ 기타
+
+## 🧾 상세 설명
+<!-- 문제가 발생한 원인, 어떤 기능인지, 어떤 리팩토링이 필요한지 등 상세히 작성 -->
+<!-- ex: 로그인 API에서 JWT 토큰 생성 중 null pointer 발생 -->
+
+## ✅ 기대 동작 / 목표
+<!-- 문제가 없다면 어떤 동작이 기대되는지, 기능이라면 어떤 결과를 목표로 하는지 작성 -->
+
+## 🧪 재현 방법 (버그인 경우)
+<!-- 아래 항목들을 자유롭게 작성 -->
+1. 실행 환경
+2. 재현 단계
+3. 에러 메시지/콘솔 로그
+
+## 🔧 작업 내용
+- [ ] 작업 1
+- [ ] 작업 2
+- [ ] 테스트 / 문서화 여부 확인
+
+## 🔗 관련 이슈 또는 커밋
+<!-- 관련된 이슈 번호, 커밋, PR 등 -->
+
+## 💬 기타 참고 사항
+<!-- 디자인/기획 논의 내용, 기술적 고민, 유의 사항 등 -->
+```
+
+## 프론트엔드 코딩 가이드라인
+
+### 규칙
+- UI(`*.ui.tsx`)와 로직(`*.container.tsx`)을 분리합니다.
+- 검증은 `zod`를 사용하고 별도의 스펙 파일을 사용합니다.
+- 구성 요소 이름을 설명적으로 지정합니다 (예: `HeaderBreadcrumb`).
+- 원자 디자인으로 최적화합니다: 원자, 분자, 유기체.
+- 스타일 레이아웃은 항상 8배수로 패딩이나 gap을 지정.
+- Zustand 및 react-query를 사용해서 상태관리를 해야 함.
+  - 만약 설계상 굳이 더 복잡해지는 로직이 만들어진다면 간단하게 useState로 처리 해도 됨.
+
+## 🧠 Story Field 개발 규칙 (코드 & 기술 환경 중심)
+🛠 기술 스택
+항목	내용
+플랫폼	React Native + Expo
+라우팅	Expo Router (파일 기반 라우팅)
+언어	TypeScript (strict: true)
+상태 관리	Zustand (글로벌), React Query (API 상태)
+네트워킹	axios (apiClient.ts로 추상화하여 사용)
+스타일링	@emotion/native (CSS-in-JS 기반)
+저장소	AsyncStorage (직접 접근 금지, storage 래퍼 사용)
+음성 & 멀티미디어	expo-speech, react-native-tts, expo-av, voice
+빌드 및 배포	EAS CLI 사용 예정 (iOS, Android 동시 지원)
+
+### 네이밍 컨벤션
+- 컴포넌트 파일: PascalCase.tsx (예: Button.tsx)
+- 훅 파일: camelCase.ts (예: useAuth.ts)
+- 유틸리티 파일: camelCase.ts (예: formatDate.ts)
+- 스타일 파일: camelCase.module.css (예: button.module.css)
+- 테스트 파일: *.test.tsx 또는 *.spec.tsx
+
+## 프로젝트 구조
+- 계층형 아키텍처를 기반으로 패키지 구조화할 것
+- 각 패키지는 단일 책임을 가질 것
+- 순환 의존성은 엄격히 금지할 것
+- 도메인 중심 설계 원칙을 따를 것
+
+
+#### UI 컴포넌트 원칙:
+- **Props로 모든 데이터와 핸들러 받기**
+- Alert, navigation 등 사이드 이펙트 금지
+- 순수 프레젠테이션만 담당
+- styled-components로 스타일링
+
+#### Model 훅 원칙:
+- **모든 비즈니스 로직 포함** (Alert, router, API 호출 등)
+- 전역관리 필요한 상태는 zustand를 사용
+- useState, useEffect 등 상태 관리
+- UI 컴포넌트에 필요한 데이터와 핸들러 반환
+
+### 📝 app/ 폴더 라우팅 원칙
+app 폴더의 파일들은 반드시 다음 패턴만 사용:
+
+```typescript
+// ✅ 올바른 예시
+import React from 'react';
+import { PageWidget } from '../widgets/PageWidget/ui/PageWidget';
+import { usePageWidget } from '../widgets/PageWidget/model/usePageWidget';
+
+export default function PageScreen() {
+  const { data, handlers } = usePageWidget();
+  return <PageWidget {...data} {...handlers} />;
+}
+```
+
+### 🚫 금지 사항
+- app/ 폴더에 UI 로직, 스타일링, Alert 등 작성 금지
+- Widget의 UI 컴포넌트에서 useRouter, Alert 등 사이드 이펙트 금지
+- 하나의 파일에 UI와 로직 혼재 금지
+
+### 📂 파일 네이밍 컨벤션
+- **app/**: camelCase.tsx (예: `createStory.tsx`, `userProfile.tsx`)
+- **widgets/**: PascalCase 폴더명 (예: `HomePage/`, `SettingsPage/`)
+- **components/**: PascalCase.tsx (예: `Button.tsx`, `Modal.tsx`)
+- **hooks/**: camelCase.ts (예: `useAuth.ts`, `useHomePage.ts`)
+
+### 💡 예시: SettingsPage 구조
+
+**widgets/SettingsPage/ui/SettingsPage.tsx:**
+```typescript
+interface SettingsPageProps {
+  onSettingPress: (setting: string) => void;
+  onLogout: () => void;
+  isLoggingOut: boolean;
+}
+
+export const SettingsPage: React.FC<SettingsPageProps> = ({ 
+  onSettingPress, onLogout, isLoggingOut 
+}) => {
+  // 순수 UI만 담당
+};
+```
+
+**widgets/SettingsPage/model/useSettingsPage.ts:**
+```typescript
+export const useSettingsPage = () => {
+  const [isLoggingOut, setIsLoggingOut] = useState(false);
+  const router = useRouter();
+
+  const handleSettingPress = (setting: string) => {
+    Alert.alert('준비중', `${setting} 설정 기능이 준비중입니다.`);
+  };
+
+  const handleLogout = () => {
+    // 로그아웃 로직
+  };
+
+  return { isLoggingOut, handleSettingPress, handleLogout };
+};
+```
+
+**app/settings.tsx:**
+```typescript
+import { SettingsPage } from '../widgets/SettingsPage/ui/SettingsPage';
+import { useSettingsPage } from '../widgets/SettingsPage/model/useSettingsPage';
+
+export default function SettingsScreen() {
+  const { isLoggingOut, handleSettingPress, handleLogout } = useSettingsPage();
+  return <SettingsPage onSettingPress={handleSettingPress} onLogout={handleLogout} isLoggingOut={isLoggingOut} />;
+}
+```
+
+### ⚡ 자동 적용 규칙
+- 새로운 페이지 생성 시 자동으로 widgets/ 구조로 분리
+- app/ 폴더는 항상 위젯 호출만 담당
+- UI와 로직 분리를 항상 우선시
+- import는 직접 경로 사용 (index.ts 재export 문제 방지)

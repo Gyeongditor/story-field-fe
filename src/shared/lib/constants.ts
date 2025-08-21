@@ -1,11 +1,12 @@
 /** API 관련 엔드포인트 */
 export const API_ENDPOINTS = {
-  LOGIN: "/auth/login",
-  LOGOUT: "/auth/logout",
-  SIGNUP: "/users/signup",
-  VERIFY_EMAIL: "/users/verify",
-  PROFILE: "/auth/profile",
-  STORIES: "/stories",
+  LOGIN: "/api/auth/login",
+  LOGOUT: "/api/auth/logout",
+  REISSUE_TOKEN: "/api/auth/reissue",
+  SIGNUP: "/api/user/signup",
+  VERIFY_EMAIL: "/api/user/verify",
+  USER_PROFILE: "/api/auth/profile",
+  STORIES: "/api/stories",
 };
 
 /** 앱 공통 레이아웃 */

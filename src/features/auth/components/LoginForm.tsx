@@ -2,8 +2,7 @@ import React, { useState, useMemo } from 'react';
 import styled from '@emotion/native';
 import { loginUser, type LoginCredentials } from '../../../entities/user';
 import { authActions } from '../../../shared/stores/authStore';
-import { Input, Title, LinkText, ErrorText } from '../../../shared/ui';
-import Button from '../../../shared/ui/Button';
+import { Input, Button, Title, LinkText, ErrorText } from '../../../shared/ui';
 
 const Container = styled.View`
   width: 100%;

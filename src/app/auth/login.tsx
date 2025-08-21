@@ -1,37 +1,15 @@
 import React from 'react';
-import styled from '@emotion/native';
-import { useRouter } from 'expo-router';
-import { LoginForm } from '../../features/auth/components';
+import { LoginPage } from '../../widgets/LoginPage/ui/LoginPage';
+import { useLoginPage } from '../../widgets/LoginPage/model/useLoginPage';
 
-const Container = styled.View`
-  flex: 1;
-  justify-content: center;
-  padding: 20px;
-  background-color: #ffffff;
-`;
-
-export default function LoginPage() {
-  const router = useRouter();
-
-  const handleLoginSuccess = () => {
-    router.replace('/');
-  };
-
-  const handleSignupPress = () => {
-    router.push('/auth/signup');
-  };
-
-  const handleGuestBrowse = () => {
-    router.replace('/?guest=1');
-  };
+export default function LoginScreen() {
+  const { handleLoginSuccess, handleSignupPress, handleGuestBrowse } = useLoginPage();
 
   return (
-    <Container>
-      <LoginForm
-        onLoginSuccess={handleLoginSuccess}
-        onSignupPress={handleSignupPress}
-        onGuestBrowse={handleGuestBrowse}
-      />
-    </Container>
+    <LoginPage
+      onLoginSuccess={handleLoginSuccess}
+      onSignupPress={handleSignupPress}
+      onGuestBrowse={handleGuestBrowse}
+    />
   );
 } 

@@ -1,7 +1,7 @@
 import React, { useEffect } from 'react';
 import { View, ActivityIndicator } from 'react-native';
 import styled from '@emotion/native';
-import { useAuthRestore, useAuthStatus } from '../hooks/useAuth';
+import { useAuthRestore, useAuthStatus } from '../../features/auth';
 
 const LoadingContainer = styled.View`
   flex: 1;

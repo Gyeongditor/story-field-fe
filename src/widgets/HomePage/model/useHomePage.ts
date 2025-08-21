@@ -1,7 +1,7 @@
 import { useEffect } from 'react';
 import { Alert } from 'react-native';
 import { useRouter, useLocalSearchParams } from 'expo-router';
-import { useAuthStatus } from '../../../shared/hooks/useAuth';
+import { useAuthStatus } from '../../../features/auth';
 
 export const useHomePage = () => {
   const router = useRouter();

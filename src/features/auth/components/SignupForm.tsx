@@ -107,16 +107,21 @@ export default function SignupForm({ onSignupSuccess, onLoginPress }: SignupForm
     } catch (error: any) {
       const status = error?.response?.status;
       const message = error?.response?.data?.message;
+      const errorCode = error?.response?.data?.code;
       
-      console.error('회원가입 실패:', error);
+
       
       // 사용자 친화적 에러 메시지
       if (status === 409) {
         setError('이미 존재하는 이메일입니다.');
       } else if (status === 422) {
         setError('입력 정보를 확인해주세요.');
+      } else if (status === 400) {
+        setError(message || '입력 정보가 올바르지 않습니다.');
+      } else if (status === 500) {
+        setError(`서버 오류가 발생했습니다. ${message || '잠시 후 다시 시도해주세요.'}`);
       } else {
-        setError('회원가입 중 오류가 발생했습니다. 잠시 후 다시 시도해주세요.');
+        setError(`회원가입 중 오류가 발생했습니다. (${status || 'Network'}) 잠시 후 다시 시도해주세요.`);
       }
     } finally {
       setIsSubmitting(false);
