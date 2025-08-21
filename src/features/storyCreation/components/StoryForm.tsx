@@ -26,6 +26,7 @@ const Input = styled.TextInput`
   border-radius: 12px;
   padding: 12px; /* 1.5 x 8 */
   margin-bottom: 16px; /* 2 x 8 */
+  height: 48px; /* 6 x 8 - 일정한 높이 */
 `;
 
 const StepIndicator = styled.View`
@@ -73,6 +74,78 @@ const ChipText = styled.Text<{ active: boolean }>`
   color: ${p => (p.active ? '#ffffff' : '#111827')};
   font-weight: 600;
 `;
+
+// 제목 생성 방식 선택을 위한 새로운 스타일 컴포넌트들
+const TitleMethodSelector = styled.View`
+  margin-bottom: 16px; /* 2 x 8 */
+`;
+
+const MethodLabel = styled.Text`
+  font-size: 14px;
+  color: #6b7280;
+  margin-bottom: 8px; /* 1 x 8 */
+`;
+
+const MethodButtons = styled.View`
+  flex-direction: row;
+  gap: 8px; /* 1 x 8 */
+  margin-bottom: 16px; /* 2 x 8 */
+`;
+
+const MethodButton = styled.TouchableOpacity<{ active: boolean }>`
+  flex: 1;
+  padding: 12px 16px; /* 1.5 x 8, 2 x 8 */
+  border-radius: 12px;
+  border-width: 1px;
+  border-color: ${props => props.active ? '#3b82f6' : '#e5e7eb'};
+  background-color: ${props => props.active ? '#3b82f6' : '#ffffff'};
+  align-items: center;
+  flex-direction: row;
+  justify-content: center;
+  gap: 6px; /* 0.75 x 8 */
+`;
+
+const MethodButtonText = styled.Text<{ active: boolean }>`
+  font-size: 14px;
+  font-weight: 600;
+  color: ${props => props.active ? '#ffffff' : '#374151'};
+`;
+
+const MethodIcon = styled.Text`
+  font-size: 16px;
+`;
+
+const TitleInputContainer = styled.View`
+  margin-bottom: 16px; /* 2 x 8 */
+  min-height: 48px; /* 6 x 8 - 일정한 높이 유지 */
+`;
+
+
+
+const GeneratedTitleCard = styled.View`
+  background-color: #f0f9ff;
+  border-width: 1px;
+  border-color: #0ea5e9;
+  border-radius: 12px;
+  padding: 16px; /* 2 x 8 */
+  margin-bottom: 16px; /* 2 x 8 */
+`;
+
+const GeneratedTitleLabel = styled.Text`
+  font-size: 12px;
+  color: #0369a1;
+  margin-bottom: 8px; /* 1 x 8 */
+  font-weight: 500;
+`;
+
+const GeneratedTitleText = styled.Text`
+  font-size: 16px;
+  color: #0c4a6e;
+  font-weight: 600;
+  line-height: 24px;
+`;
+
+
 
 const Footer = styled.View`
   flex-direction: row;
@@ -129,6 +202,7 @@ export default function StoryForm({ initialVoiceText, onCancel, onComplete }: St
   const [step, setStep] = useState<1 | 2>(1);
 
   // Step 1
+  const [titleMethod, setTitleMethod] = useState<'manual' | 'ai'>('manual');
   const [title, setTitle] = useState('');
   const [protagonist, setProtagonist] = useState('');
   const [body, setBody] = useState(initialVoiceText || '');
@@ -141,7 +215,14 @@ export default function StoryForm({ initialVoiceText, onCancel, onComplete }: St
   const [artStyle, setArtStyle] = useState<string>('수채화');
   const [dialect, setDialect] = useState<string>('표준어');
 
-  const canNext = useMemo(() => !!title && !!protagonist && !!body, [title, protagonist, body]);
+  // AI 생성 선택 시 제목은 자동으로 처리되므로 검증에서 제외
+  const currentTitle = titleMethod === 'ai' ? 'AI가 생성할 예정' : title;
+
+  const canNext = useMemo(() => {
+    // AI 생성 선택 시에는 제목 검증 제외, 직접 입력 시에는 제목 필수
+    const titleValid = titleMethod === 'ai' || (titleMethod === 'manual' && !!title.trim());
+    return titleValid && !!protagonist.trim() && !!body.trim();
+  }, [titleMethod, title, protagonist, body]);
 
   const goNext = () => {
     if (step === 1) {
@@ -155,7 +236,7 @@ export default function StoryForm({ initialVoiceText, onCancel, onComplete }: St
     
     // 완료 데이터 전달
     const storyData: StoryFormData = { 
-      title, 
+      title: titleMethod === 'ai' ? '' : title, // AI 생성 시 빈 문자열, 직접 입력 시 사용자 입력값
       protagonist, 
       content: body, 
       mood, 
@@ -177,12 +258,52 @@ export default function StoryForm({ initialVoiceText, onCancel, onComplete }: St
         {step === 1 ? (
           <Card>
             <SectionTitle>기본 정보</SectionTitle>
-            <Label>동화 제목</Label>
-            <Input
-              placeholder="제목을 입력하세요"
-              value={title}
-              onChangeText={setTitle}
-            />
+            
+            {/* 제목 생성 방식 선택 */}
+            <TitleMethodSelector>
+              <MethodLabel>제목 생성 방식</MethodLabel>
+              <MethodButtons>
+                <MethodButton 
+                  active={titleMethod === 'manual'} 
+                  onPress={() => {
+                    setTitleMethod('manual');
+                  }}
+                >
+                  <MethodIcon>✏️</MethodIcon>
+                  <MethodButtonText active={titleMethod === 'manual'}>직접 입력</MethodButtonText>
+                </MethodButton>
+                <MethodButton 
+                  active={titleMethod === 'ai'} 
+                  onPress={() => setTitleMethod('ai')}
+                >
+                  <MethodIcon>🤖</MethodIcon>
+                  <MethodButtonText active={titleMethod === 'ai'}>AI 생성</MethodButtonText>
+                </MethodButton>
+              </MethodButtons>
+            </TitleMethodSelector>
+
+            {/* 제목 입력 영역 - 직접 입력 시에만 표시 */}
+            {titleMethod === 'manual' && (
+              <TitleInputContainer>
+                <Label>동화 제목</Label>
+                <Input
+                  placeholder="제목을 입력하세요"
+                  value={title}
+                  onChangeText={setTitle}
+                />
+              </TitleInputContainer>
+            )}
+
+            {/* AI 생성 선택 시 안내 메시지 */}
+            {titleMethod === 'ai' && (
+              <TitleInputContainer>
+                <Label>동화 제목</Label>
+                <GeneratedTitleCard>
+                  <GeneratedTitleLabel>🤖 AI가 자동으로 제목을 생성합니다</GeneratedTitleLabel>
+                  <GeneratedTitleText>동화 생성 시 AI가 스토리 내용을 바탕으로 제목을 지어드려요</GeneratedTitleText>
+                </GeneratedTitleCard>
+              </TitleInputContainer>
+            )}
 
             <Label>주인공</Label>
             <Input
