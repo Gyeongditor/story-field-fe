@@ -1,8 +1,9 @@
 import { View, ScrollView, Alert, Text } from 'react-native';
 import styled from '@emotion/native';
-import { Link, useRouter } from 'expo-router';
-import { useState } from 'react';
-import { BottomNavigation } from '../../shared/ui/BottomNavigation';
+import { useEffect, useMemo, useState } from 'react';
+import { useRouter } from 'expo-router';
+import BottomNavigation from '../../shared/ui/BottomNavigation';
+import { useAuthStatus } from '../../features/auth';
 
 const Container = styled.View`
   flex: 1;
@@ -11,8 +12,8 @@ const Container = styled.View`
 
 const Header = styled.View`
   background-color: #ffffff;
-  padding: 16px;
-  padding-top: 56px;
+  padding: 16px; /* 2 x 8 */
+  padding-top: 56px; /* 7 x 8 */
   border-bottom-width: 1px;
   border-bottom-color: #e5e5e5;
   flex-direction: row;
@@ -42,176 +43,133 @@ const HeaderIcon = styled.TouchableOpacity`
 
 const Content = styled.ScrollView`
   flex: 1;
-  padding: 16px;
+  padding: 16px; /* 2 x 8 */
 `;
 
-const QuickActionsSection = styled.View`
-  margin-bottom: 24px;
+const FilterBar = styled.View`
+  flex-direction: row;
+  gap: 8px; /* 1 x 8 */
+  margin-bottom: 16px; /* 2 x 8 */
 `;
 
-const SectionTitle = styled.Text`
-  font-size: 18px;
+const FilterChip = styled.TouchableOpacity<{ active: boolean }>`
+  padding: 8px 16px; /* 1 x 8, 2 x 8 */
+  background-color: ${props => (props.active ? '#007AFF' : '#ffffff')};
+  border-width: 1px;
+  border-color: ${props => (props.active ? '#007AFF' : '#e5e5e5')};
+  border-radius: 16px; /* 2 x 8 */
+`;
+
+const FilterText = styled.Text<{ active: boolean }>`
+  color: ${props => (props.active ? '#ffffff' : '#1c1c1e')};
   font-weight: 600;
-  color: #1c1c1e;
-  margin-bottom: 16px;
 `;
 
-const QuickActionsGrid = styled.View`
+const Grid = styled.View`
   flex-direction: row;
   flex-wrap: wrap;
-  gap: 8px;
+  gap: 16px; /* 2 x 8 */
 `;
 
-const QuickActionCard = styled.TouchableOpacity`
+const StoryCard = styled.TouchableOpacity`
   width: 48%;
   background-color: #ffffff;
-  border-radius: 16px;
-  padding: 24px 16px;
-  align-items: center;
-  shadow-color: #000;
-  shadow-offset: 0px 1px;
-  shadow-opacity: 0.05;
-  shadow-radius: 4px;
-  elevation: 2;
-`;
-
-const QuickActionIcon = styled.Text`
-  font-size: 32px;
-  margin-bottom: 8px;
-`;
-
-const QuickActionTitle = styled.Text`
-  font-size: 14px;
-  font-weight: 600;
-  color: #1c1c1e;
-  text-align: center;
-  margin-bottom: 4px;
-`;
-
-const QuickActionSubtitle = styled.Text`
-  font-size: 12px;
-  color: #8e8e93;
-  text-align: center;
-`;
-
-const FullWidthCard = styled.TouchableOpacity`
-  background-color: #ffffff;
-  border-radius: 16px;
-  padding: 24px 16px;
-  align-items: center;
-  margin: 16px 0;
-  shadow-color: #000;
-  shadow-offset: 0px 1px;
-  shadow-opacity: 0.05;
-  shadow-radius: 4px;
-  elevation: 2;
-`;
-
-const RecommendationSection = styled.View`
-  margin-bottom: 24px;
-`;
-
-const CategoryCard = styled.TouchableOpacity`
-  background-color: #ffffff;
   border-radius: 12px;
-  padding: 16px;
-  margin-right: 12px;
-  width: 120px;
+  overflow: hidden;
+  border-width: 1px;
+  border-color: #e5e5e5;
+`;
+
+const Badge = styled.View`
+  position: absolute;
+  top: 8px; /* 1 x 8 */
+  left: 8px; /* 1 x 8 */
+  background-color: #f2f2f7;
+  padding: 4px 8px; /* 0.5 x 8, 1 x 8 */
+  border-radius: 8px; /* 1 x 8 */
+`;
+
+const BadgeText = styled.Text`
+  font-size: 12px;
+  color: #6b7280;
+`;
+
+const Cover = styled.View`
+  background-color: #f3f4f6;
+  height: 128px; /* 16 x 8 */
   align-items: center;
-  shadow-color: #000;
-  shadow-offset: 0px 1px;
-  shadow-opacity: 0.05;
-  shadow-radius: 4px;
-  elevation: 2;
+  justify-content: center;
 `;
 
-const CategoryIcon = styled.Text`
-  font-size: 24px;
-  margin-bottom: 8px;
+const CoverText = styled.Text`
+  color: #9ca3af;
 `;
 
-const CategoryTitle = styled.Text`
-  font-size: 14px;
-  font-weight: 500;
-  color: #1c1c1e;
+const CardBody = styled.View`
+  padding: 12px; /* 1.5 x 8 */
+  gap: 8px; /* 1 x 8 */
+`;
+
+const StoryTitle = styled.Text`
+  font-weight: 600;
+  color: #1f2937;
+`;
+
+const StoryDate = styled.Text`
+  color: #6b7280;
+  font-size: 12px;
+`;
+
+const Row = styled.View`
+  flex-direction: row;
+  align-items: center;
+  gap: 8px; /* 1 x 8 */
+`;
+
+const EmptyText = styled.Text`
+  margin-top: 32px; /* 4 x 8 */
   text-align: center;
+  color: #9ca3af;
 `;
 
-const CategoryScrollView = styled.ScrollView`
-  padding-left: 16px;
-`;
-
-// 목업 데이터
+// 목업 데이터 (스크린샷과 유사한 형태)
 const mockStories = [
-  {
-    id: '1',
-    title: '용감한 토끼의 모험',
-    description: '숲속에서 길을 잃은 토끼가 집으로 돌아가는 이야기',
-    createdAt: '2024-01-15',
-    category: '모험',
-  },
-  {
-    id: '2',
-    title: '마법의 나무',
-    description: '소원을 들어주는 신비한 나무를 찾는 소녀의 이야기',
-    createdAt: '2024-01-14',
-    category: '판타지',
-  },
-  {
-    id: '3',
-    title: '친구가 된 고양이와 강아지',
-    description: '서로 다른 두 동물이 친구가 되어가는 따뜻한 이야기',
-    createdAt: '2024-01-13',
-    category: '우정',
-  },
+  { id: '1', title: '나의 첫 동화', date: '2023-09-01', cover: '동화 표지 1', tag: '즐겨찾기' },
+  { id: '2', title: '두 번째 동화', date: '2023-08-20', cover: '동화 표지 2', tag: '공유' },
+  { id: '3', title: '셋째 동화', date: '2023-07-15', cover: '동화 표지 3', tag: '즐겨찾기' },
+  { id: '4', title: '넷째 동화', date: '2023-06-05', cover: '동화 표지 4', tag: '공유' },
 ];
 
-// 카테고리 데이터
-const categories = [
-  { id: 'adventure', icon: '🗺️', title: '모험' },
-  { id: 'fantasy', icon: '🧚', title: '판타지' },
-  { id: 'friendship', icon: '🤝', title: '우정' },
-  { id: 'animal', icon: '🐻', title: '동물' },
-];
+type Filter = '전체' | '즐겨찾기' | '공유';
 
 export default function StoriesIndex() {
   const router = useRouter();
+  const { isAuthenticated, isLoading } = useAuthStatus();
+  const [filter, setFilter] = useState<Filter>('전체');
 
-  const handleQuickAction = (action: string) => {
-    switch (action) {
-      case 'new_text':
-        Alert.alert('준비중', '새 동화 만들기 기능 준비중입니다.');
-        break;
-      case 'new_voice':
-        Alert.alert('준비중', '새 동화 음성 기능 준비중입니다.');
-        break;
-      case 'my_stories':
-        Alert.alert('준비중', '내 동화(북마크) 기능 준비중입니다.');
-        break;
-      case 'my_voices':
-        Alert.alert('준비중', '내 음성(보이스) 기능 준비중입니다.');
-        break;
-      case 'recent':
-        Alert.alert('준비중', '최근 읽은 동화 기능 준비중입니다.');
-        break;
-      default:
-        break;
+  useEffect(() => {
+    if (!isLoading && !isAuthenticated) {
+      router.replace('/auth/login');
     }
-  };
+  }, [isAuthenticated, isLoading]);
 
-  const handleCategoryPress = (categoryId: string) => {
-    Alert.alert('카테고리', `${categoryId} 카테고리 동화 목록으로 이동합니다.`);
-  };
+  const filtered = useMemo(() => {
+    if (filter === '전체') return mockStories;
+    return mockStories.filter(s => s.tag === filter);
+  }, [filter]);
+
+  if (!isLoading && !isAuthenticated) {
+    return null;
+  }
 
   return (
     <Container>
       <Header>
-        <HeaderTitle>AI 동화</HeaderTitle>
+        <HeaderTitle>내 동화</HeaderTitle>
         <HeaderIcons>
-         
-                     <HeaderIcon onPress={() => Alert.alert('메뉴', '메뉴가 열립니다.')}>
-             <Text>☰</Text>
-           </HeaderIcon>
+          <HeaderIcon onPress={() => Alert.alert('메뉴', '메뉴가 열립니다.')}>
+            <Text>☰</Text>
+          </HeaderIcon>
           <HeaderIcon onPress={() => Alert.alert('알림', '알림 기능 준비중입니다.')}>
             <Text>🔔</Text>
           </HeaderIcon>
@@ -219,61 +177,44 @@ export default function StoriesIndex() {
       </Header>
 
       <Content showsVerticalScrollIndicator={false}>
-        <QuickActionsSection>
-          <SectionTitle>Quick Actions</SectionTitle>
-          <QuickActionsGrid>
-            <QuickActionCard onPress={() => handleQuickAction('new_text')}>
-              <QuickActionIcon>📝</QuickActionIcon>
-              <QuickActionTitle>새 동화 텍스트</QuickActionTitle>
-              <QuickActionSubtitle>새 동화(텍스트)</QuickActionSubtitle>
-            </QuickActionCard>
-            
-            <QuickActionCard onPress={() => handleQuickAction('new_voice')}>
-              <QuickActionIcon>🎤</QuickActionIcon>
-              <QuickActionTitle>새 동화 음성</QuickActionTitle>
-              <QuickActionSubtitle>새 동화(음성)</QuickActionSubtitle>
-            </QuickActionCard>
-            
-            <QuickActionCard onPress={() => handleQuickAction('my_stories')}>
-              <QuickActionIcon>🔖</QuickActionIcon>
-              <QuickActionTitle>내 동화</QuickActionTitle>
-              <QuickActionSubtitle>내 동화(북마크)</QuickActionSubtitle>
-            </QuickActionCard>
-            
-            <QuickActionCard onPress={() => handleQuickAction('my_voices')}>
-              <QuickActionIcon>🎵</QuickActionIcon>
-              <QuickActionTitle>내 음성</QuickActionTitle>
-              <QuickActionSubtitle>내 동화(보이스)</QuickActionSubtitle>
-            </QuickActionCard>
-          </QuickActionsGrid>
-          
-          <FullWidthCard onPress={() => handleQuickAction('recent')}>
-            <QuickActionIcon>📖</QuickActionIcon>
-            <QuickActionTitle>최근 읽은 동화</QuickActionTitle>
-          </FullWidthCard>
-        </QuickActionsSection>
+        <FilterBar>
+          {(['전체', '즐겨찾기', '공유'] as Filter[]).map(key => (
+            <FilterChip key={key} active={filter === key} onPress={() => setFilter(key)}>
+              <FilterText active={filter === key}>{key}</FilterText>
+            </FilterChip>
+          ))}
+        </FilterBar>
 
-        <RecommendationSection>
-          <SectionTitle>추천 카테고리</SectionTitle>
-          <CategoryScrollView 
-            horizontal 
-            showsHorizontalScrollIndicator={false}
-            contentContainerStyle={{ paddingRight: 16 }}
-          >
-            {categories.map((category) => (
-              <CategoryCard
-                key={category.id}
-                onPress={() => handleCategoryPress(category.id)}
-              >
-                <CategoryIcon>{category.icon}</CategoryIcon>
-                <CategoryTitle>{category.title}</CategoryTitle>
-              </CategoryCard>
+        {filtered.length === 0 ? (
+          <EmptyText>아직 만든 동화가 없어요</EmptyText>
+        ) : (
+          <Grid>
+            {filtered.map((story) => (
+              <StoryCard key={story.id} onPress={() => router.push(`/stories/${story.id}`)}>
+                <View>
+                  <Cover>
+                    <CoverText>{story.cover}</CoverText>
+                  </Cover>
+                  <Badge>
+                    <BadgeText>{story.tag}</BadgeText>
+                  </Badge>
+                </View>
+                <CardBody>
+                  <StoryTitle>{story.title}</StoryTitle>
+                  <StoryDate>{story.date}</StoryDate>
+                  <Row>
+                    <Text>⭐</Text>
+                    <Text>✏️</Text>
+                    <Text>🔗</Text>
+                  </Row>
+                </CardBody>
+              </StoryCard>
             ))}
-          </CategoryScrollView>
-        </RecommendationSection>
+          </Grid>
+        )}
       </Content>
 
       <BottomNavigation />
     </Container>
   );
-} 
+}

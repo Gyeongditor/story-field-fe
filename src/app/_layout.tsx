@@ -14,10 +14,16 @@ export default function RootLayout() {
         <AppInitializer>
           <Stack screenOptions={{ headerShown: false }}>
             <Stack.Screen name="index" />
-            <Stack.Screen name="auth" />
-            <Stack.Screen name="stories" />
-            <Stack.Screen name="create" />
+            <Stack.Screen name="createStory" />
             <Stack.Screen name="settings" />
+            <Stack.Screen name="auth/login" />
+            <Stack.Screen name="auth/signup" />
+            <Stack.Screen name="auth/verify/[token]" />
+            <Stack.Screen name="create/generating" />
+            <Stack.Screen name="create/text" />
+            <Stack.Screen name="create/voice" />
+            <Stack.Screen name="stories/index" />
+            <Stack.Screen name="stories/[id]" />
           </Stack>
           <StatusBar style="auto" />
         </AppInitializer>
