@@ -1,4 +1,4 @@
-import { View, ScrollView, Alert } from 'react-native';
+import { View, ScrollView, Alert, TextInput } from 'react-native';
 import styled from '@emotion/native';
 import { useLocalSearchParams, useRouter } from 'expo-router';
 import { useState } from 'react';
@@ -35,6 +35,17 @@ const HeaderTitle = styled.Text`
   flex: 1;
 `;
 
+const EditButton = styled.TouchableOpacity`
+  padding: 8px;
+  margin-left: 16px;
+`;
+
+const EditButtonText = styled.Text`
+  font-size: 18px;
+  font-weight: 600;
+  color: #1f1f1f;
+`;
+
 const Content = styled.ScrollView`
   padding: 24px;
 `;
@@ -67,6 +78,19 @@ const StoryTitle = styled.Text`
   line-height: 36px;
 `;
 
+const StoryTitleInput = styled.TextInput`
+  font-size: 28px;
+  font-weight: 700;
+  color: #1f1f1f;
+  margin-bottom: 8px;
+  line-height: 36px;
+  border-width: 1px;
+  border-color: #3b82f6;
+  border-radius: 8px;
+  padding: 8px;
+  background-color: #f8fafc;
+`;
+
 const StoryMeta = styled.Text`
   font-size: 14px;
   color: #6b7280;
@@ -78,6 +102,20 @@ const StoryContent = styled.Text`
   line-height: 28px;
   color: #374151;
   margin-bottom: 32px;
+`;
+
+const StoryContentInput = styled.TextInput`
+  font-size: 16px;
+  line-height: 28px;
+  color: #374151;
+  margin-bottom: 32px;
+  border-width: 1px;
+  border-color: #3b82f6;
+  border-radius: 8px;
+  padding: 12px;
+  background-color: #f8fafc;
+  min-height: 200px;
+  text-align-vertical: top;
 `;
 
 const ControlsContainer = styled.View`
@@ -205,6 +243,9 @@ export default function StoryDetail() {
   const { id } = useLocalSearchParams();
   const router = useRouter();
   const [selectedDialect, setSelectedDialect] = useState('표준어');
+  const [isEditMode, setIsEditMode] = useState(false);
+  const [editedTitle, setEditedTitle] = useState('');
+  const [editedContent, setEditedContent] = useState('');
 
   const story = mockStoryData[id as string];
 
@@ -221,6 +262,29 @@ export default function StoryDetail() {
     );
   }
 
+  // 수정 모드 진입 시 초기값 설정
+  const handleEditMode = () => {
+    if (!isEditMode) {
+      setEditedTitle(story.title);
+      setEditedContent(story.content);
+    }
+    setIsEditMode(!isEditMode);
+  };
+
+  // 수정 완료
+  const handleSaveEdit = () => {
+    // 실제로는 API 호출로 데이터 저장
+    Alert.alert('수정 완료', '동화 내용이 수정되었습니다.');
+    setIsEditMode(false);
+  };
+
+  // 수정 취소
+  const handleCancelEdit = () => {
+    setIsEditMode(false);
+    setEditedTitle(story.title);
+    setEditedContent(story.content);
+  };
+
   const handleShare = () => {
     Alert.alert('공유', '동화를 공유하는 기능을 준비중입니다.');
   };
@@ -236,6 +300,9 @@ export default function StoryDetail() {
           <BackButtonText>‹</BackButtonText>
         </BackButton>
         <HeaderTitle>동화 읽기</HeaderTitle>
+        <EditButton onPress={handleEditMode}>
+          <EditButtonText>{isEditMode ? '✓' : '✏️'}</EditButtonText>
+        </EditButton>
       </Header>
 
       <Content>
@@ -243,38 +310,71 @@ export default function StoryDetail() {
           <PlaceholderIcon>🏰</PlaceholderIcon>
         </StoryImage>
         
-        <StoryTitle>{story.title}</StoryTitle>
+        {isEditMode ? (
+          <StoryTitleInput
+            value={editedTitle}
+            onChangeText={setEditedTitle}
+            placeholder="동화 제목을 입력하세요"
+            multiline
+          />
+        ) : (
+          <StoryTitle>{story.title}</StoryTitle>
+        )}
+        
         <StoryMeta>{story.category} • {story.createdAt}</StoryMeta>
-        <StoryContent>{story.content}</StoryContent>
+        
+        {isEditMode ? (
+          <StoryContentInput
+            value={editedContent}
+            onChangeText={setEditedContent}
+            placeholder="동화 내용을 입력하세요"
+            multiline
+          />
+        ) : (
+          <StoryContent>{story.content}</StoryContent>
+        )}
       </Content>
 
       <ControlsContainer>
-        <VoiceSelector>
-          <VoiceLabel>사투리 선택</VoiceLabel>
-          <VoiceOptions horizontal showsHorizontalScrollIndicator={false}>
-            {dialectOptions.map((dialect) => (
-              <VoiceOption
-                key={dialect}
-                selected={selectedDialect === dialect}
-                onPress={() => setSelectedDialect(dialect)}
-              >
-                <VoiceOptionText selected={selectedDialect === dialect}>
-                  {dialect}
-                </VoiceOptionText>
-              </VoiceOption>
-            ))}
-          </VoiceOptions>
-        </VoiceSelector>
+        {isEditMode ? (
+          <ControlRow>
+            <ControlButton onPress={handleSaveEdit} style={{ backgroundColor: '#10b981' }}>
+              <ControlButtonText>저장</ControlButtonText>
+            </ControlButton>
+            <ControlButton onPress={handleCancelEdit} style={{ backgroundColor: '#6b7280' }}>
+              <ControlButtonText>취소</ControlButtonText>
+            </ControlButton>
+          </ControlRow>
+        ) : (
+          <>
+            <VoiceSelector>
+              <VoiceLabel>사투리 선택</VoiceLabel>
+              <VoiceOptions horizontal showsHorizontalScrollIndicator={false}>
+                {dialectOptions.map((dialect) => (
+                  <VoiceOption
+                    key={dialect}
+                    selected={selectedDialect === dialect}
+                    onPress={() => setSelectedDialect(dialect)}
+                  >
+                    <VoiceOptionText selected={selectedDialect === dialect}>
+                      {dialect}
+                    </VoiceOptionText>
+                  </VoiceOption>
+                ))}
+              </VoiceOptions>
+            </VoiceSelector>
 
-        <ControlRow>
-          <ControlButton onPress={handleShare}>
-            <ControlButtonText>공유</ControlButtonText>
-          </ControlButton>
-          
-          <ControlButton onPress={handleReadBook}>
-            <ControlButtonText>책 읽기</ControlButtonText>
-          </ControlButton>
-        </ControlRow>
+            <ControlRow>
+              <ControlButton onPress={handleShare}>
+                <ControlButtonText>공유</ControlButtonText>
+              </ControlButton>
+              
+              <ControlButton onPress={handleReadBook}>
+                <ControlButtonText>책 읽기</ControlButtonText>
+              </ControlButton>
+            </ControlRow>
+          </>
+        )}
       </ControlsContainer>
     </Container>
   );
