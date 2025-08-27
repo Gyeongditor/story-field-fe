@@ -222,3 +222,5 @@ export const getUserProfile = async (): Promise<User> => {
   
   return data.data;
 };
+
+
