@@ -290,7 +290,7 @@ export default function StoryDetail() {
   };
 
   const handleReadBook = () => {
-    Alert.alert('책 읽기', '동화를 읽어주는 기능을 준비중입니다.');
+    router.push(`/stories/${id}/read`);
   };
 
   return (
