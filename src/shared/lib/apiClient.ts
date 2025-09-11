@@ -3,10 +3,11 @@ import Constants from "expo-constants";
 import { Platform } from "react-native";
 
 /**
- * 공용 Axios 인스턴스
- * - 기본 baseURL 설정 (환경 변수 기반)
- * - 인증 토큰 자동 추가 (추후 토큰 스토리지 연동)
- * - 공통 에러 처리
+ * 스프링 백엔드 API 전용 Axios 인스턴스
+ * - 포트 9080 사용
+ * - 사용자 인증, 스토리 관리 등 일반적인 API 전용
+ * - 인증 토큰 자동 추가
+ * - 공통 에러 처리 및 토큰 갱신
  */
 
 const resolveBaseUrl = (): string => {

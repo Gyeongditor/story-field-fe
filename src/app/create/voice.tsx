@@ -6,6 +6,7 @@ import SpeechInput from '../../features/storyCreation/components/SpeechInput';
 const Container = styled.View`
   flex: 1;
   background-color: #ffffff;
+  padding-bottom: 34px; /* iPhone 하단 안전 영역 */
 `;
 
 const Header = styled.View`
@@ -35,15 +36,15 @@ export default function VoiceCreationPage() {
     router.back();
   };
 
-  const handleComplete = (text: string) => {
-    console.log('✅ STT 성공:', text);
-    // 음성 → 텍스트 폼으로 이동 (2단계 폼 진행)
+  const handleNext = (audioFile: string) => {
+    console.log('✅ 녹음 완료, 다음 단계로:', audioFile);
+    // 음성 파일과 함께 텍스트 폼으로 이동
     router.push({
       pathname: '/create/text',
-      params: { voiceText: text }
+      params: { 
+        audioFile: audioFile // 음성 파일 경로 전달
+      }
     });
-    // TODO: 음성으로 바로 동화 생성하는 경우
-    // router.push('/create/generating');
   };
 
   return (
@@ -57,7 +58,7 @@ export default function VoiceCreationPage() {
 
       <SpeechInput
         onCancel={handleCancel}
-        onComplete={handleComplete}
+        onNext={handleNext}
       />
     </Container>
   );

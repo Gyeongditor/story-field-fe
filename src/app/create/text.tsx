@@ -34,7 +34,7 @@ const Title = styled.Text`
 
 export default function CreateTextPage() {
   const router = useRouter();
-  const params = useLocalSearchParams<{ voiceText?: string }>();
+  const params = useLocalSearchParams<{ audioFile?: string }>();
 
   const handleCancel = () => {
     router.back();
@@ -43,14 +43,19 @@ export default function CreateTextPage() {
   const handleComplete = (storyData: StoryFormData) => {
     console.log('✅ 동화 생성 요청 데이터:', storyData);
     
-    // TODO: 실제 API 연동 시 데이터 전달
-    // router.push({
-    //   pathname: '/create/generating',
-    //   params: storyData
-    // });
-    
-    // 목업용 - 폼 데이터 없이 로딩 화면 이동
-    router.push('/create/generating');
+    // storyData를 generating 화면으로 전달
+    router.push({
+      pathname: '/create/generating',
+      params: {
+        storyData: JSON.stringify(storyData)
+      }
+    });
+  };
+
+  const handleAudioComplete = (storyId: string) => {
+    console.log('✅ 음성 파일로 동화 생성 성공:', storyId);
+    // 생성된 동화로 바로 이동
+    router.replace(`/stories/${storyId}`);
   };
 
   return (
@@ -63,9 +68,10 @@ export default function CreateTextPage() {
       </Header>
 
       <StoryForm
-        initialVoiceText={params.voiceText}
+        audioFile={params.audioFile}
         onCancel={handleCancel}
         onComplete={handleComplete}
+        onAudioComplete={handleAudioComplete}
       />
     </Container>
   );

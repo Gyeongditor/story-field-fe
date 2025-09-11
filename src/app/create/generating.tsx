@@ -6,10 +6,12 @@ import { StoryFormData } from '../../features/storyCreation/components/StoryForm
 
 export default function StoryGeneratingPage() {
   const router = useRouter();
-  const params = useLocalSearchParams(); // API 연동 시 사용
+  const params = useLocalSearchParams<{ storyData?: string }>();
 
-  // TODO: params에서 storyData 파싱
-  const storyData: StoryFormData | undefined = undefined;
+  // params에서 storyData 파싱
+  const storyData: StoryFormData | undefined = params.storyData 
+    ? JSON.parse(params.storyData) 
+    : undefined;
 
   const handleComplete = (storyId: string) => {
     router.replace(`/stories/${storyId}`);
