@@ -1,8 +1,9 @@
 import React, { useState, useEffect } from 'react';
 import { View, Alert } from 'react-native';
 import styled from '@emotion/native';
-// import { apiClient } from '../../../shared/lib/apiClient';
+import { generateStoryFromText } from '../api/storyApi';
 import { StoryFormData } from './StoryForm';
+import { GenerateStoryFromTextRequest } from '../../../shared/types/api';
 
 const Container = styled.View`
   flex: 1;
@@ -99,33 +100,60 @@ export default function GeneratingScreen({ storyData, onComplete, onError }: Gen
   const [loadingDots, setLoadingDots] = useState('');
 
   useEffect(() => {
-    // TODO: 실제 동화 생성 API 호출
-    // const generateStory = async () => {
-    //   try {
-    //     const response = await apiClient.post('/api/stories/generate', storyData);
-    //     const storyId = response.data.id;
-    //     onComplete(storyId);
-    //   } catch (error) {
-    //     console.error('동화 생성 실패:', error);
-    //     Alert.alert('생성 실패', '동화 생성 중 오류가 발생했습니다.');
-    //     onError();
-    //   }
-    // };
+    if (!storyData) {
+      onError();
+      return;
+    }
 
-    // 프로그레스바 애니메이션 (10초 동안) - 목업용
+    // StoryFormData를 API 요청 형식으로 변환
+    const convertToApiRequest = (data: StoryFormData): GenerateStoryFromTextRequest => {
+      // 키워드는 주인공만 사용 (단일 키워드)
+      const keyword = data.protagonist;
+      
+      // 플롯은 제목, 내용, 분위기, 그림체, 사투리를 모두 포함
+      const plot = data.title 
+        ? `${data.title}\n\n${data.content}\n\n분위기: ${data.mood}, 그림체: ${data.artStyle}, 사투리: ${data.dialect}`
+        : `${data.content}\n\n분위기: ${data.mood}, 그림체: ${data.artStyle}, 사투리: ${data.dialect}`;
+      
+      return {
+        keyword,
+        plot
+      };
+    };
+
+    const generateStory = async () => {
+      try {
+        const apiRequest = convertToApiRequest(storyData);
+        console.log('✅ 동화 생성 API 요청:', apiRequest);
+        
+        const response = await generateStoryFromText(apiRequest);
+        console.log('✅ 동화 생성 성공:', response);
+        
+        // 프로그레스바를 100%로 설정
+        setProgress(100);
+        
+        // 완료 후 리더 화면으로 이동
+        setTimeout(() => {
+          onComplete(response.story_id);
+        }, 500);
+        
+      } catch (error: any) {
+        console.error('❌ 동화 생성 실패:', error);
+        Alert.alert('생성 실패', error.message || '동화 생성 중 오류가 발생했습니다.');
+        onError();
+      }
+    };
+
+    // 프로그레스바 애니메이션 (실제 API 호출과 함께 진행)
     const progressInterval = setInterval(() => {
       setProgress(prev => {
-        if (prev >= 100) {
+        if (prev >= 90) { // 90%까지만 프로그레스바로 진행
           clearInterval(progressInterval);
-          // 완료 후 리더 화면으로 이동 (목업 데이터)
-          setTimeout(() => {
-            onComplete('1'); // 임시 ID - 실제로는 생성된 스토리 ID 사용
-          }, 500);
-          return 100;
+          return prev;
         }
         return prev + 1;
       });
-    }, 100); // 10초 = 10000ms / 100단계 = 100ms 간격
+    }, 100);
 
     // 로딩 도트 애니메이션
     const dotsInterval = setInterval(() => {
@@ -135,18 +163,15 @@ export default function GeneratingScreen({ storyData, onComplete, onError }: Gen
       });
     }, 500);
 
+    // API 호출 시작
+    generateStory();
+
     return () => {
       clearInterval(progressInterval);
       clearInterval(dotsInterval);
     };
   }, [storyData, onComplete, onError]);
 
-  // 실제 API 연동 시 사용할 로그
-  useEffect(() => {
-    if (storyData) {
-      console.log('✅ 동화 생성 요청 데이터:', storyData);
-    }
-  }, [storyData]);
 
   return (
     <Container>
