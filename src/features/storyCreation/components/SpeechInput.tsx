@@ -4,19 +4,19 @@ import styled from '@emotion/native';
 import { Audio } from 'expo-av';
 import Constants from 'expo-constants';
 import * as FileSystem from 'expo-file-system';
-import { convertSpeechToText } from '../../../shared/lib/speechToText';
 
 const Container = styled.View`
   flex: 1;
-  align-items: center;
-  justify-content: center;
-  padding: 24px;
+  padding: 24px 24px 16px 24px; /* 하단 패딩 줄임 */
 `;
 
-const Content = styled.View`
+const ContentContainer = styled.View`
+  flex: 1;
   align-items: center;
+  justify-content: center;
   width: 100%;
   max-width: 320px;
+  align-self: center;
 `;
 
 const Instruction = styled.Text`
@@ -59,45 +59,37 @@ const StatusText = styled.Text<{ recording: boolean }>`
 `;
 
 const Footer = styled.View`
-  flex-direction: row;
-  gap: 16px;
+  flex-direction: column;
+  gap: 12px;
   width: 100%;
+  max-width: 320px;
+  align-self: center;
+  margin-top: 16px;
 `;
 
-const GhostButton = styled.TouchableOpacity`
-  flex: 1;
+
+const PrimaryButton = styled.TouchableOpacity`
+  width: 100%;
   padding: 16px;
   border-radius: 8px;
-  border: 1px solid #e5e7eb;
+  background-color: #3b82f6;
   align-items: center;
 `;
 
-const GhostText = styled.Text`
-  font-size: 16px;
-  font-weight: 500;
-  color: #6b7280;
-`;
-
-const PrimaryButton = styled.TouchableOpacity<{ disabled?: boolean }>`
-  flex: 2;
-  padding: 16px;
-  border-radius: 8px;
-  background-color: ${props => props.disabled ? '#d1d5db' : '#3b82f6'};
-  align-items: center;
-`;
-
-const PrimaryText = styled.Text<{ disabled?: boolean }>`
+const PrimaryText = styled.Text`
   font-size: 16px;
   font-weight: 600;
-  color: ${props => props.disabled ? '#9ca3af' : '#ffffff'};
+  color: #ffffff;
 `;
+
+
 
 interface SpeechInputProps {
   onCancel: () => void;
-  onComplete: (text: string) => void;
+  onNext: (audioFile: string) => void; // 녹음 완료 후 다음 단계로
 }
 
-export default function SpeechInput({ onCancel, onComplete }: SpeechInputProps) {
+export default function SpeechInput({ onCancel, onNext }: SpeechInputProps) {
   const [recording, setRecording] = useState<Audio.Recording | null>(null);
   const [isRecording, setIsRecording] = useState(false);
   const [recordingUri, setRecordingUri] = useState<string | null>(null);
@@ -133,25 +125,23 @@ export default function SpeechInput({ onCancel, onComplete }: SpeechInputProps) 
 
       const { recording: newRecording } = await Audio.Recording.createAsync({
         android: {
-          extension: '.wav',
-          outputFormat: Audio.AndroidOutputFormat.DEFAULT,
-          audioEncoder: Audio.AndroidAudioEncoder.DEFAULT,
-          sampleRate: 16000,
-          numberOfChannels: 1,
+          extension: '.m4a',
+          outputFormat: Audio.AndroidOutputFormat.MPEG_4,
+          audioEncoder: Audio.AndroidAudioEncoder.AAC,
+          sampleRate: 44100,
+          numberOfChannels: 2,
           bitRate: 128000,
         },
         ios: {
-          extension: '.wav',
+          extension: '.m4a',
+          outputFormat: Audio.IOSOutputFormat.MPEG4AAC,
           audioQuality: Audio.IOSAudioQuality.HIGH,
-          sampleRate: 16000,
-          numberOfChannels: 1,
+          sampleRate: 44100,
+          numberOfChannels: 2,
           bitRate: 128000,
-          linearPCMBitDepth: 16,
-          linearPCMIsBigEndian: false,
-          linearPCMIsFloat: false,
         },
         web: {
-          mimeType: 'audio/webm;codecs=opus',
+          mimeType: 'audio/mp4',
           bitsPerSecond: 128000,
         },
       });
@@ -182,7 +172,7 @@ export default function SpeechInput({ onCancel, onComplete }: SpeechInputProps) 
         }
 
         // 파일 복사
-        const fileName = `recording-${Date.now()}.wav`;
+        const fileName = `recording-${Date.now()}.m4a`;
         const finalPath = `${recordingsDir}${fileName}`;
         await FileSystem.copyAsync({
           from: uri,
@@ -209,43 +199,22 @@ export default function SpeechInput({ onCancel, onComplete }: SpeechInputProps) 
     }
   };
 
-  const handleUseRecording = async () => {
+  const handleNext = () => {
     if (!recordingUri) {
       Alert.alert('오류', '녹음된 파일이 없습니다.');
       return;
     }
-
-    setIsProcessing(true);
-    try {
-      console.log('🔄 STT 변환 시작:', recordingUri);
-      const result = await convertSpeechToText(recordingUri);
-      
-      if (result.success && result.text) {
-        console.log('✅ STT 성공:', result.text);
-        onComplete(result.text);
-      } else {
-        console.error('❌ STT 실패:', result.error);
-        Alert.alert('변환 실패', `음성을 텍스트로 변환하는데 실패했습니다.\n\n오류: ${result.error}`);
-      }
-    } catch (error: any) {
-      console.error('🔥 STT 처리 오류:', error);
-      Alert.alert('처리 오류', error.message);
-    } finally {
-      setIsProcessing(false);
-    }
-  };
-
-  const retryRecording = () => {
-    setRecordingUri(null);
-    setHasRecorded(false);
+    
+    console.log('✅ 녹음 완료, 다음 단계로:', recordingUri);
+    onNext(recordingUri);
   };
 
   return (
     <Container>
-      <Content>
+      <ContentContainer>
         <Instruction>
           {hasRecorded 
-            ? '녹음이 완료되었습니다.\n"텍스트로 만들기"를 눌러 계속 진행하세요.'
+            ? '녹음이 완료되었습니다.\n"다음" 버튼을 눌러 동화 설정을 진행하세요.'
             : '자신의 이야기를 말씀해주세요.\n마이크 버튼을 눌러 녹음을 시작하세요.'
           }
         </Instruction>
@@ -259,18 +228,15 @@ export default function SpeechInput({ onCancel, onComplete }: SpeechInputProps) 
         <StatusText recording={isRecording}>
           {isRecording ? '녹음 중...' : hasRecorded ? '녹음 완료' : '녹음 대기'}
         </StatusText>
-      </Content>
+      </ContentContainer>
 
-      <Footer>
-        <GhostButton onPress={hasRecorded ? retryRecording : onCancel}>
-          <GhostText>{hasRecorded ? '다시 녹음' : '취소'}</GhostText>
-        </GhostButton>
-        <PrimaryButton disabled={!hasRecorded || isProcessing} onPress={handleUseRecording}>
-          <PrimaryText disabled={!hasRecorded || isProcessing}>
-            {isProcessing ? 'STT 변환 중...' : '텍스트로 만들기'}
-          </PrimaryText>
-        </PrimaryButton>
-      </Footer>
+      {hasRecorded && (
+        <Footer>
+          <PrimaryButton onPress={handleNext}>
+            <PrimaryText>다음</PrimaryText>
+          </PrimaryButton>
+        </Footer>
+      )}
     </Container>
   );
 }

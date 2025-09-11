@@ -2,6 +2,8 @@ import React, { useMemo, useState } from 'react';
 import { Alert, ScrollView } from 'react-native';
 import styled from '@emotion/native';
 import { useRouter } from 'expo-router';
+import * as FileSystem from 'expo-file-system';
+import { generateStoryFromAudio } from '../api/storyApi';
 
 const Container = styled.View`
   flex: 1;
@@ -184,9 +186,10 @@ const PrimaryText = styled.Text`
 `;
 
 interface StoryFormProps {
-  initialVoiceText?: string;
+  audioFile?: string;
   onCancel: () => void;
   onComplete: (data: StoryFormData) => void;
+  onAudioComplete?: (storyId: string) => void;
 }
 
 export interface StoryFormData {
@@ -198,14 +201,14 @@ export interface StoryFormData {
   dialect: string;
 }
 
-export default function StoryForm({ initialVoiceText, onCancel, onComplete }: StoryFormProps) {
+export default function StoryForm({ audioFile, onCancel, onComplete, onAudioComplete }: StoryFormProps) {
   const [step, setStep] = useState<1 | 2>(1);
 
   // Step 1
   const [titleMethod, setTitleMethod] = useState<'manual' | 'ai'>('manual');
   const [title, setTitle] = useState('');
   const [protagonist, setProtagonist] = useState('');
-  const [body, setBody] = useState(initialVoiceText || '');
+  const [body, setBody] = useState('');
 
   // Step 2
   const moods = ['따뜻한', '모험적인', '신비로운', '코믹한'];
@@ -221,10 +224,12 @@ export default function StoryForm({ initialVoiceText, onCancel, onComplete }: St
   const canNext = useMemo(() => {
     // AI 생성 선택 시에는 제목 검증 제외, 직접 입력 시에는 제목 필수
     const titleValid = titleMethod === 'ai' || (titleMethod === 'manual' && !!title.trim());
-    return titleValid && !!protagonist.trim() && !!body.trim();
-  }, [titleMethod, title, protagonist, body]);
+    // 음성 파일이 있을 때는 내용 검증 제외
+    const contentValid = audioFile || !!body.trim();
+    return titleValid && !!protagonist.trim() && contentValid;
+  }, [titleMethod, title, protagonist, body, audioFile]);
 
-  const goNext = () => {
+  const goNext = async () => {
     if (step === 1) {
       if (!canNext) {
         Alert.alert('확인', '제목, 주인공, 내용을 모두 입력해주세요.');
@@ -234,7 +239,50 @@ export default function StoryForm({ initialVoiceText, onCancel, onComplete }: St
       return;
     }
     
-    // 완료 데이터 전달
+    // 음성 파일이 있는 경우 바로 API 호출
+    if (audioFile && onAudioComplete) {
+      try {
+        // 파일 존재 확인
+        const fileInfo = await FileSystem.getInfoAsync(audioFile);
+        if (!fileInfo.exists) {
+          throw new Error('음성 파일을 찾을 수 없습니다.');
+        }
+
+        console.log('📄 파일 경로:', audioFile);
+        
+        // React Native에서는 파일 URI를 직접 사용
+        console.log('📖 React Native 파일 처리 방식 사용');
+        
+        // React Native에서 FormData에 사용할 파일 객체
+        // 하지만 이번에는 실제 파일 내용을 읽어서 전달
+        const audioFileForUpload = {
+          uri: audioFile,
+          type: 'audio/mp4',
+          name: 'recording.m4a'
+        };
+        
+        console.log('📁 업로드용 파일 객체 생성:', audioFileForUpload);
+        
+        // 키워드 조합
+        const keywords = `${protagonist}, ${mood}, ${artStyle}, ${dialect}`;
+        
+        // API 호출
+        const result = await generateStoryFromAudio({
+          audio_file: audioFileForUpload, // React Native 파일 객체 전달
+          keywords: keywords
+        });
+        
+        console.log('✅ 음성 파일로 동화 생성 성공:', result);
+        onAudioComplete(result.story_id);
+        return;
+      } catch (error: any) {
+        console.error('❌ 음성 파일로 동화 생성 실패:', error);
+        Alert.alert('생성 실패', error.message || '음성 파일로 동화 생성 중 오류가 발생했습니다.');
+        return;
+      }
+    }
+    
+    // 텍스트 방식인 경우 기존 로직 사용
     const storyData: StoryFormData = { 
       title: titleMethod === 'ai' ? '' : title, // AI 생성 시 빈 문자열, 직접 입력 시 사용자 입력값
       protagonist, 
@@ -312,15 +360,31 @@ export default function StoryForm({ initialVoiceText, onCancel, onComplete }: St
               onChangeText={setProtagonist}
             />
 
-            <Label>스토리 내용</Label>
-            <Input
-              placeholder="이야기 내용을 적어주세요"
-              value={body}
-              onChangeText={setBody}
-              multiline
-              textAlignVertical="top"
-              style={{ height: 160 }}
-            />
+            {/* 음성 파일이 없을 때만 내용 입력창 표시 */}
+            {!audioFile && (
+              <>
+                <Label>스토리 내용</Label>
+                <Input
+                  placeholder="이야기 내용을 적어주세요"
+                  value={body}
+                  onChangeText={setBody}
+                  multiline
+                  textAlignVertical="top"
+                  style={{ height: 160 }}
+                />
+              </>
+            )}
+            
+            {/* 음성 파일이 있을 때 안내 메시지 */}
+            {audioFile && (
+              <TitleInputContainer>
+                <Label>스토리 내용</Label>
+                <GeneratedTitleCard>
+                  <GeneratedTitleLabel>🎤 음성으로 녹음된 내용</GeneratedTitleLabel>
+                  <GeneratedTitleText>녹음하신 음성이 동화의 내용으로 사용됩니다</GeneratedTitleText>
+                </GeneratedTitleCard>
+              </TitleInputContainer>
+            )}
           </Card>
         ) : (
           <Card>
