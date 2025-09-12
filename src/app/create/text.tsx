@@ -1,7 +1,9 @@
-import React from 'react';
+import React, { useState } from 'react';
 import styled from '@emotion/native';
 import { useRouter, useLocalSearchParams } from 'expo-router';
+import { Alert } from 'react-native';
 import StoryForm, { StoryFormData } from '../../features/storyCreation/components/StoryForm';
+import { generateStoryFromText } from '../../features/storyCreation/api/storyApi';
 
 const Container = styled.View`
   flex: 1;
@@ -35,21 +37,43 @@ const Title = styled.Text`
 export default function CreateTextPage() {
   const router = useRouter();
   const params = useLocalSearchParams<{ audioFile?: string }>();
+  const [isLoading, setIsLoading] = useState(false);
 
   const handleCancel = () => {
     router.back();
   };
 
-  const handleComplete = (storyData: StoryFormData) => {
+  const handleComplete = async (storyData: StoryFormData) => {
     console.log('✅ 동화 생성 요청 데이터:', storyData);
     
-    // storyData를 generating 화면으로 전달
-    router.push({
-      pathname: '/create/generating',
-      params: {
-        storyData: JSON.stringify(storyData)
-      }
-    });
+    try {
+      setIsLoading(true);
+      
+      // API 스펙에 맞게 데이터 변환
+      // keyword: 동화 제목, 주인공, 분위기, 그림체, 사투리 조합
+      // plot: 스토리 내용
+      const keyword = `${storyData.title || 'AI 생성 제목'}, ${storyData.protagonist}, ${storyData.mood}, ${storyData.artStyle}, ${storyData.dialect}`;
+      const plot = storyData.content;
+      
+      console.log('📤 API 요청 데이터:', { keyword, plot });
+      
+      // 텍스트로 동화 생성 API 호출
+      const response = await generateStoryFromText({
+        keyword,
+        plot
+      });
+      
+      console.log('✅ 텍스트로 동화 생성 성공:', response);
+      
+      // 생성된 동화로 바로 이동
+      router.replace(`/stories/${response.story_id}`);
+      
+    } catch (error: any) {
+      console.error('❌ 텍스트로 동화 생성 실패:', error);
+      Alert.alert('생성 실패', error.message || '동화 생성 중 오류가 발생했습니다.');
+    } finally {
+      setIsLoading(false);
+    }
   };
 
   const handleAudioComplete = (storyId: string) => {
@@ -72,6 +96,7 @@ export default function CreateTextPage() {
         onCancel={handleCancel}
         onComplete={handleComplete}
         onAudioComplete={handleAudioComplete}
+        isLoading={isLoading}
       />
     </Container>
   );
