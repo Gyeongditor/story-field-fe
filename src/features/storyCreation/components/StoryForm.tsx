@@ -158,26 +158,28 @@ const Footer = styled.View`
   background-color: #ffffff;
 `;
 
-const GhostButton = styled.TouchableOpacity`
+const GhostButton = styled.TouchableOpacity<{ disabled?: boolean }>`
   flex: 1;
   padding: 14px; /* ~1.75 x 8 */
   border-radius: 12px;
   border-width: 1px;
-  border-color: #111827;
+  border-color: ${props => props.disabled ? '#9ca3af' : '#111827'};
   align-items: center;
+  opacity: ${props => props.disabled ? 0.6 : 1};
 `;
 
-const GhostText = styled.Text`
-  color: #111827;
+const GhostText = styled.Text<{ disabled?: boolean }>`
+  color: ${props => props.disabled ? '#9ca3af' : '#111827'};
   font-weight: 600;
 `;
 
-const PrimaryButton = styled.TouchableOpacity`
+const PrimaryButton = styled.TouchableOpacity<{ disabled?: boolean }>`
   flex: 1;
   padding: 14px;
   border-radius: 12px;
-  background-color: #111827;
+  background-color: ${props => props.disabled ? '#9ca3af' : '#111827'};
   align-items: center;
+  opacity: ${props => props.disabled ? 0.6 : 1};
 `;
 
 const PrimaryText = styled.Text`
@@ -190,6 +192,7 @@ interface StoryFormProps {
   onCancel: () => void;
   onComplete: (data: StoryFormData) => void;
   onAudioComplete?: (storyId: string) => void;
+  isLoading?: boolean;
 }
 
 export interface StoryFormData {
@@ -201,7 +204,7 @@ export interface StoryFormData {
   dialect: string;
 }
 
-export default function StoryForm({ audioFile, onCancel, onComplete, onAudioComplete }: StoryFormProps) {
+export default function StoryForm({ audioFile, onCancel, onComplete, onAudioComplete, isLoading = false }: StoryFormProps) {
   const [step, setStep] = useState<1 | 2>(1);
 
   // Step 1
@@ -420,11 +423,13 @@ export default function StoryForm({ audioFile, onCancel, onComplete, onAudioComp
       </Content>
 
       <Footer>
-        <GhostButton onPress={() => (step === 1 ? onCancel() : setStep(1))}>
-          <GhostText>{step === 1 ? '닫기' : '이전'}</GhostText>
+        <GhostButton onPress={() => (step === 1 ? onCancel() : setStep(1))} disabled={isLoading}>
+          <GhostText disabled={isLoading}>{step === 1 ? '닫기' : '이전'}</GhostText>
         </GhostButton>
-        <PrimaryButton onPress={goNext}>
-          <PrimaryText>{step === 1 ? '다음' : '완료'}</PrimaryText>
+        <PrimaryButton onPress={goNext} disabled={isLoading || (step === 2 && !canNext)}>
+          <PrimaryText>
+            {isLoading ? '생성 중...' : (step === 1 ? '다음' : '완료')}
+          </PrimaryText>
         </PrimaryButton>
       </Footer>
     </Container>
