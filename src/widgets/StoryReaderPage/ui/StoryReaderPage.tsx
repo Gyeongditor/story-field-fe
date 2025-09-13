@@ -1,16 +1,8 @@
 import React, { useState, useEffect } from 'react';
-import { View, Text, Dimensions, TouchableOpacity, ActivityIndicator } from 'react-native';
+import { View, Text, Dimensions, TouchableOpacity, ActivityIndicator, Image } from 'react-native';
 import styled from '@emotion/native';
-import { PanGestureHandler } from 'react-native-gesture-handler';
-import Animated, { 
-  useSharedValue, 
-  useAnimatedGestureHandler, 
-  useAnimatedStyle, 
-  withSpring,
-  runOnJS,
-  interpolate,
-  Extrapolate
-} from 'react-native-reanimated';
+// @ts-ignore - 복사한 PageFlipper 컴포넌트 사용
+import PageFlipper from '../../../shared/components/PageFlipper/index';
 
 const { width: screenWidth, height: screenHeight } = Dimensions.get('window');
 
@@ -61,85 +53,7 @@ const PageIndicatorText = styled.Text`
   font-weight: 500;
 `;
 
-const ContentContainer = styled.View`
-  flex: 1;
-  flex-direction: row;
-`;
 
-const ImageContainer = styled.View`
-  flex: 1;
-  justify-content: center;
-  align-items: center;
-  background-color: #1a1a1a;
-`;
-
-const StoryImage = styled.Image`
-  width: 100%;
-  height: 100%;
-  resize-mode: contain;
-`;
-
-const ImageLoadingContainer = styled.View`
-  position: absolute;
-  top: 0;
-  left: 0;
-  right: 0;
-  bottom: 0;
-  justify-content: center;
-  align-items: center;
-  background-color: #1a1a1a;
-`;
-
-const StoryContainer = styled.View`
-  flex: 1;
-  padding: 32px;
-  justify-content: center;
-  background-color: rgba(0, 0, 0, 0.8);
-`;
-
-const StoryTitle = styled.Text`
-  color: #ffffff;
-  font-size: 28px;
-  font-weight: 700;
-  margin-bottom: 24px;
-  text-align: center;
-  line-height: 36px;
-`;
-
-const StoryContent = styled.Text`
-  color: #ffffff;
-  font-size: 18px;
-  line-height: 28px;
-  text-align: center;
-  opacity: 0.9;
-`;
-
-const NavigationContainer = styled.View`
-  position: absolute;
-  bottom: 32px;
-  left: 0;
-  right: 0;
-  flex-direction: row;
-  justify-content: center;
-  gap: 16px;
-`;
-
-const NavButton = styled.TouchableOpacity<{ disabled?: boolean }>`
-  width: 56px;
-  height: 56px;
-  border-radius: 28px;
-  background-color: ${props => props.disabled ? 'rgba(255, 255, 255, 0.1)' : 'rgba(255, 255, 255, 0.2)'};
-  align-items: center;
-  justify-content: center;
-  opacity: ${props => props.disabled ? 0.5 : 1};
-  backdrop-filter: blur(10px);
-`;
-
-const NavButtonText = styled.Text`
-  color: #ffffff;
-  font-size: 20px;
-  font-weight: 600;
-`;
 
 const SwipeHint = styled.View`
   position: absolute;
@@ -159,39 +73,32 @@ const SwipeHintText = styled.Text`
   border-radius: 20px;
 `;
 
-interface StoryReaderPageProps {
-  currentPage: number;
-  totalPages: number;
-  storyTitle: string;
-  storyContent: string;
+interface StoryPageData {
+  id: string;
+  title: string;
+  content: string;
   imageUrl: string;
+}
+
+interface StoryReaderPageProps {
+  pages: StoryPageData[];
+  initialPage?: number;
   onBack: () => void;
-  onPrevious: () => void;
-  onNext: () => void;
-  canGoPrevious: boolean;
-  canGoNext: boolean;
+  onPageChange?: (pageIndex: number) => void;
 }
 
 export const StoryReaderPage: React.FC<StoryReaderPageProps> = ({
-  currentPage,
-  totalPages,
-  storyTitle,
-  storyContent,
-  imageUrl,
+  pages,
+  initialPage = 0,
   onBack,
-  onPrevious,
-  onNext,
-  canGoPrevious,
-  canGoNext,
+  onPageChange,
 }) => {
-  const [imageLoading, setImageLoading] = useState(true);
+  const [currentPageIndex, setCurrentPageIndex] = useState(initialPage);
   const [showSwipeHint, setShowSwipeHint] = useState(true);
-  const translateX = useSharedValue(0);
-  const opacity = useSharedValue(1);
 
   // 첫 페이지에서만 스와이프 힌트를 2초간 보여주기
   useEffect(() => {
-    if (currentPage === 1) {
+    if (currentPageIndex === 0) {
       setShowSwipeHint(true);
       const timer = setTimeout(() => {
         setShowSwipeHint(false);
@@ -201,46 +108,67 @@ export const StoryReaderPage: React.FC<StoryReaderPageProps> = ({
     } else {
       setShowSwipeHint(false);
     }
-  }, [currentPage]);
+  }, [currentPageIndex]);
 
-  const gestureHandler = useAnimatedGestureHandler({
-    onStart: (_, context: any) => {
-      context.startX = translateX.value;
-    },
-    onActive: (event, context) => {
-      translateX.value = context.startX + event.translationX;
-      
-      // 스와이프 중일 때 투명도 조절
-      const progress = Math.abs(event.translationX) / (screenWidth * 0.3);
-      opacity.value = interpolate(progress, [0, 1], [1, 0.7], Extrapolate.CLAMP);
-    },
-    onEnd: (event) => {
-      const threshold = screenWidth * 0.3;
-      
-      if (event.translationX > threshold && canGoPrevious) {
-        runOnJS(onPrevious)();
-      } else if (event.translationX < -threshold && canGoNext) {
-        runOnJS(onNext)();
-      }
-      
-      translateX.value = withSpring(0);
-      opacity.value = withSpring(1);
-    },
-  });
-
-  const animatedStyle = useAnimatedStyle(() => {
-    return {
-      transform: [{ translateX: translateX.value }],
-      opacity: opacity.value,
-    };
-  });
-
-  const handleImageLoad = () => {
-    setImageLoading(false);
+  const handlePageChange = (pageIndex: number) => {
+    setCurrentPageIndex(pageIndex);
+    onPageChange?.(pageIndex);
   };
 
-  const handleImageError = () => {
-    setImageLoading(false);
+  const renderStoryPage = (pageId: string) => {
+    const page = pages.find(p => p.id === pageId);
+    if (!page) return null;
+
+    return (
+      <View style={{
+        flex: 1,
+        flexDirection: 'row',
+        backgroundColor: '#000000',
+      }}>
+        {/* 왼쪽 절반 - 이미지 */}
+        <View style={{
+          flex: 1,
+          backgroundColor: '#1a1a1a',
+        }}>
+          <Image 
+            source={{ uri: page.imageUrl }} 
+            style={{
+              width: '100%',
+              height: '100%',
+              resizeMode: 'cover',
+            }}
+          />
+        </View>
+
+        {/* 오른쪽 절반 - 텍스트 */}
+        <View style={{
+          flex: 1,
+          backgroundColor: '#000000',
+          padding: 40,
+          justifyContent: 'center',
+        }}>
+          <Text style={{
+            color: '#ffffff',
+            fontSize: 24,
+            fontWeight: '700',
+            marginBottom: 24,
+            textAlign: 'center',
+            lineHeight: 32,
+          }}>
+            {page.title}
+          </Text>
+          <Text style={{
+            color: '#ffffff',
+            fontSize: 16,
+            lineHeight: 24,
+            textAlign: 'justify',
+            opacity: 0.95,
+          }}>
+            {page.content}
+          </Text>
+        </View>
+      </View>
+    );
   };
 
   return (
@@ -250,43 +178,24 @@ export const StoryReaderPage: React.FC<StoryReaderPageProps> = ({
           <BackButtonText>←</BackButtonText>
         </BackButton>
         <PageIndicator>
-          <PageIndicatorText>{currentPage} / {totalPages}</PageIndicatorText>
+          <PageIndicatorText>{currentPageIndex + 1} / {pages.length}</PageIndicatorText>
         </PageIndicator>
       </Header>
 
-      <PanGestureHandler onGestureEvent={gestureHandler}>
-        <Animated.View style={[{ flex: 1 }, animatedStyle]}>
-          <ContentContainer>
-            <ImageContainer>
-              <StoryImage 
-                source={{ uri: imageUrl }} 
-                onLoad={handleImageLoad}
-                onError={handleImageError}
-              />
-              {imageLoading && (
-                <ImageLoadingContainer>
-                  <ActivityIndicator size="large" color="#ffffff" />
-                </ImageLoadingContainer>
-              )}
-            </ImageContainer>
-            <StoryContainer>
-              <StoryTitle>{storyTitle}</StoryTitle>
-              <StoryContent>{storyContent}</StoryContent>
-            </StoryContainer>
-          </ContentContainer>
-        </Animated.View>
-      </PanGestureHandler>
+      <PageFlipper
+        data={pages.map(page => page.id)}
+        pageSize={{ width: screenWidth, height: screenHeight  }}
+        contentContainerStyle={{ 
+          flex: 1,
+          backgroundColor: '#000000',
+        }}
+        singleImageMode={false}
+        portrait={false}
+        onFlippedEnd={handlePageChange}
+        renderPage={renderStoryPage}
+      />
 
-      <NavigationContainer>
-        <NavButton onPress={onPrevious} disabled={!canGoPrevious}>
-          <NavButtonText>‹</NavButtonText>
-        </NavButton>
-        <NavButton onPress={onNext} disabled={!canGoNext}>
-          <NavButtonText>›</NavButtonText>
-        </NavButton>
-      </NavigationContainer>
-
-      {totalPages > 1 && showSwipeHint && (
+      {pages.length > 1 && showSwipeHint && (
         <SwipeHint>
           <SwipeHintText>좌우로 스와이프하여 페이지를 넘기세요</SwipeHintText>
         </SwipeHint>

@@ -6,32 +6,18 @@ import { useStoryReaderPage } from '../../../widgets/StoryReaderPage';
 export default function StoryReaderScreen() {
   const { id } = useLocalSearchParams<{ id: string }>();
   const { 
-    currentPage, 
-    currentPageIndex, 
-    totalPages, 
+    pages,
+    initialPage,
     handleBack, 
-    handlePrevious, 
-    handleNext, 
-    canGoPrevious, 
-    canGoNext 
+    handlePageChange
   } = useStoryReaderPage(id || '');
-
-  if (!currentPage) {
-    return null;
-  }
 
   return (
     <StoryReaderPage
-      currentPage={currentPageIndex}
-      totalPages={totalPages}
-      storyTitle={currentPage.title}
-      storyContent={currentPage.content}
-      imageUrl={currentPage.imageUrl}
+      pages={pages}
+      initialPage={initialPage}
       onBack={handleBack}
-      onPrevious={handlePrevious}
-      onNext={handleNext}
-      canGoPrevious={canGoPrevious}
-      canGoNext={canGoNext}
+      onPageChange={handlePageChange}
     />
   );
 }
