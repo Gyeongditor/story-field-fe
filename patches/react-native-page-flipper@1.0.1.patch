@@ -1,0 +1,14 @@
+diff --git a/src/Components/Gradient.tsx b/src/Components/Gradient.tsx
+index 6278016fc87b3383a52332cec078af281459670f..8695ddf1b8427d4474cb12141abee1df771b0198 100644
+--- a/src/Components/Gradient.tsx
++++ b/src/Components/Gradient.tsx
+@@ -1,7 +1,6 @@
+ import React from 'react';
+-import LinearGradient, {
+-    LinearGradientProps,
+-} from 'react-native-linear-gradient';
++import { LinearGradient } from 'expo-linear-gradient';
++import type { LinearGradientProps } from 'expo-linear-gradient';
+ 
+ const Gradient: React.FC<LinearGradientProps> = (props) => {
+     return <LinearGradient {...props} />;
