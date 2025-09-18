@@ -25,6 +25,9 @@ export const useSettingsPage = () => {
     if (setting === '로그인') {
       // 로그인 화면으로 이동 (일관된 라우팅 방식)
       router.push('/auth/login');
+    } else if (setting === '프로필') {
+      // 프로필 관리 화면으로 이동
+      router.push('/profile');
     } else {
       Alert.alert('준비중', `${setting} 설정 기능이 준비중입니다.`);
     }

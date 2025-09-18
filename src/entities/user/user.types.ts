@@ -47,3 +47,36 @@ export interface LoginResponse {
 export interface UserProfileResponse {
   data: User;
 }
+
+// Profile Management API Types
+export interface UserProfileData {
+  email: string;
+  username: string;
+}
+
+export interface UserProfileUpdateRequest {
+  email?: string;
+  password?: string;
+  username?: string;
+}
+
+export interface UserProfileGetResponse {
+  status: number;
+  code: string;
+  message: string;
+  data: UserProfileData;
+}
+
+export interface UserProfileUpdateResponse {
+  status: number;
+  code: string;
+  message: string;
+  data: null;
+}
+
+export interface UserDeleteResponse {
+  status: number;
+  code: string;
+  message: string;
+  data: null;
+}

@@ -7,7 +7,11 @@ import type {
   SignupData, 
   AuthResponse, 
   User,
-  AuthTokens 
+  AuthTokens,
+  UserProfileGetResponse,
+  UserProfileUpdateRequest,
+  UserProfileUpdateResponse,
+  UserDeleteResponse
 } from './user.types';
 
 // 로그인 서비스
@@ -221,6 +225,96 @@ export const getUserProfile = async (): Promise<User> => {
   }
   
   return data.data;
+};
+
+// 프로필 관리 API 서비스 함수들
+
+// 회원 정보 조회
+export const getMyProfile = async (): Promise<UserProfileGetResponse> => {
+  console.log('🔍 [getMyProfile] API 호출 시작');
+  try {
+    // API 스펙에 따라 Authorization을 query parameter로 보내는 방식으로 시도
+    const { useAuthStore } = await import('../../shared/stores/authStore');
+    const token = useAuthStore.getState().accessToken;
+    
+    if (!token) {
+      throw new Error('인증 토큰이 없습니다.');
+    }
+    
+    const response = await apiClient.get('/api/user/me', {
+      params: {
+        Authorization: token
+      }
+    });
+    console.log('✅ [getMyProfile] 성공:', response.data);
+    return response.data;
+  } catch (error: any) {
+    console.error('❌ [getMyProfile] 실패:', {
+      status: error?.response?.status,
+      data: error?.response?.data,
+      message: error?.message
+    });
+    throw error;
+  }
+};
+
+// 회원 정보 수정
+export const updateMyProfile = async (updateData: UserProfileUpdateRequest): Promise<UserProfileUpdateResponse> => {
+  console.log('🔍 [updateMyProfile] API 호출 시작:', updateData);
+  try {
+    // API 스펙에 따라 Authorization을 query parameter로 보내는 방식으로 시도
+    const { useAuthStore } = await import('../../shared/stores/authStore');
+    const token = useAuthStore.getState().accessToken;
+    
+    if (!token) {
+      throw new Error('인증 토큰이 없습니다.');
+    }
+    
+    const response = await apiClient.put('/api/user/me', updateData, {
+      params: {
+        Authorization: token
+      }
+    });
+    console.log('✅ [updateMyProfile] 성공:', response.data);
+    return response.data;
+  } catch (error: any) {
+    console.error('❌ [updateMyProfile] 실패:', {
+      status: error?.response?.status,
+      data: error?.response?.data,
+      message: error?.message,
+      requestData: updateData
+    });
+    throw error;
+  }
+};
+
+// 회원 탈퇴
+export const deleteMyAccount = async (): Promise<UserDeleteResponse> => {
+  console.log('🔍 [deleteMyAccount] API 호출 시작');
+  try {
+    // API 스펙에 따라 Authorization을 query parameter로 보내는 방식으로 시도
+    const { useAuthStore } = await import('../../shared/stores/authStore');
+    const token = useAuthStore.getState().accessToken;
+    
+    if (!token) {
+      throw new Error('인증 토큰이 없습니다.');
+    }
+    
+    const response = await apiClient.delete('/api/user/me', {
+      params: {
+        Authorization: token
+      }
+    });
+    console.log('✅ [deleteMyAccount] 성공:', response.data);
+    return response.data;
+  } catch (error: any) {
+    console.error('❌ [deleteMyAccount] 실패:', {
+      status: error?.response?.status,
+      data: error?.response?.data,
+      message: error?.message
+    });
+    throw error;
+  }
 };
 
 
