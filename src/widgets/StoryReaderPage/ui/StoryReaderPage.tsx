@@ -8,6 +8,8 @@ const { width: screenWidth, height: screenHeight } = Dimensions.get('window');
 
 const Container = styled.View`
   flex: 1;
+  width: 100%;
+  height: 100%;
   background-color: #000000;
 `;
 
@@ -182,18 +184,22 @@ export const StoryReaderPage: React.FC<StoryReaderPageProps> = ({
         </PageIndicator>
       </Header>
 
-      <PageFlipper
-        data={pages.map(page => page.id)}
-        pageSize={{ width: screenWidth, height: screenHeight  }}
-        contentContainerStyle={{ 
-          flex: 1,
-          backgroundColor: '#000000',
-        }}
-        singleImageMode={false}
-        portrait={false}
-        onFlippedEnd={handlePageChange}
-        renderPage={renderStoryPage}
-      />
+      <View style={{ flex: 1, width: screenWidth, height: screenHeight }}>
+        <PageFlipper
+          data={pages.map(page => page.id)}
+          pageSize={{ width: screenWidth, height: screenHeight }}
+          contentContainerStyle={{ 
+            flex: 1,
+            width: screenWidth,
+            height: screenHeight,
+            backgroundColor: '#000000',
+          }}
+          singleImageMode={false}
+          portrait={false}
+          onFlippedEnd={handlePageChange}
+          renderPage={renderStoryPage}
+        />
+      </View>
 
       {pages.length > 1 && showSwipeHint && (
         <SwipeHint>
