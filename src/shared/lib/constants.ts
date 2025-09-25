@@ -7,6 +7,7 @@ export const API_ENDPOINTS = {
   VERIFY_EMAIL: "/api/user/verify",
   USER_PROFILE: "/api/auth/profile",
   STORIES: "/api/stories",
+  STORIES_MAIN: "/api/stories/main",
 };
 
 /** 앱 공통 레이아웃 */
