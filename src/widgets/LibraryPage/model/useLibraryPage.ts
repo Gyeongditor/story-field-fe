@@ -1,7 +1,10 @@
 import { useEffect, useMemo, useState, useCallback } from 'react';
 import { useRouter } from 'expo-router';
 import { Alert } from 'react-native';
+import { useInfiniteQuery } from '@tanstack/react-query';
 import { useAuthStatus } from '../../../features/auth';
+import { fetchMainStories } from '../../../entities/story/story.service';
+import type { MainStoryItem } from '../../../entities/story/story.types';
 
 export type Filter = '전체' | '즐겨찾기';
 export type SortOption = '최신순' | '오래된순' | '제목순';
@@ -17,37 +20,115 @@ export interface Story {
   cover: string;
 }
 
-// 초기 목업 데이터 (향후 API로 대체)
-const initialStories: Story[] = [
-  { id: '1', title: '나의 첫 동화', date: '2023-09-01', genre: '모험', mood: '신나는', isFavorite: true, cover: '동화 표지 1' },
-  { id: '2', title: '두 번째 동화', date: '2023-08-20', genre: '판타지', mood: '신비로운', isFavorite: false, cover: '동화 표지 2' },
-  { id: '3', title: '셋째 동화', date: '2023-07-15', genre: '일상', mood: '따뜻한', isFavorite: true, cover: '동화 표지 3' },
-  { id: '4', title: '넷째 동화', date: '2023-06-05', genre: '액션', mood: '긴장감 있는', isFavorite: false, cover: '동화 표지 4' },
-  { id: '5', title: '다섯째 동화', date: '2023-05-12', genre: '로맨스', mood: '로맨틱한', isFavorite: true, cover: '동화 표지 5' },
-  { id: '6', title: '여섯째 동화', date: '2023-04-08', genre: '공포', mood: '긴장감 있는', isFavorite: false, cover: '동화 표지 6' },
+// 목데이터
+const mockStories: Story[] = [
+  {
+    id: '1',
+    title: '너의 특별한 하루',
+    date: '2024-01-15',
+    genre: '일상',
+    mood: '따뜻한',
+    isFavorite: true,
+    cover: 'https://picsum.photos/300/400?random=1'
+  },
+  {
+    id: '2',
+    title: '마법의 숲 모험',
+    date: '2024-01-10',
+    genre: '판타지',
+    mood: '신나는',
+    isFavorite: false,
+    cover: 'https://picsum.photos/300/400?random=2'
+  },
+  {
+    id: '3',
+    title: '용감한 기사의 이야기',
+    date: '2024-01-05',
+    genre: '모험',
+    mood: '긴장감 있는',
+    isFavorite: true,
+    cover: 'https://picsum.photos/300/400?random=3'
+  },
+  {
+    id: '4',
+    title: '바닷가의 작은 집',
+    date: '2023-12-28',
+    genre: '일상',
+    mood: '따뜻한',
+    isFavorite: false,
+    cover: 'https://picsum.photos/300/400?random=4'
+  },
+  {
+    id: '5',
+    title: '별빛 아래의 약속',
+    date: '2023-12-20',
+    genre: '로맨스',
+    mood: '로맨틱한',
+    isFavorite: true,
+    cover: 'https://picsum.photos/300/400?random=5'
+  }
 ];
+
+// API 응답을 UI 모델로 변환하는 함수
+const mapApiStoryToUiStory = (apiStory: MainStoryItem): Story => ({
+  id: apiStory.storyId,
+  title: apiStory.storyTitle,
+  date: new Date().toISOString().split('T')[0], // 임시로 현재 날짜 사용
+  genre: '판타지', // 기본값 설정
+  mood: '신나는', // 기본값 설정
+  isFavorite: false, // 기본값 설정
+  cover: apiStory.thumbnailUrl || '기본 표지'
+});
 
 export const useLibraryPage = () => {
   const router = useRouter();
-  const { isAuthenticated, isLoading } = useAuthStatus();
+  const { isAuthenticated, isLoading: authLoading } = useAuthStatus();
   const [filter, setFilter] = useState<Filter>('전체');
   const [sortOption, setSortOption] = useState<SortOption>('최신순');
   const [selectedGenres, setSelectedGenres] = useState<Genre[]>([]);
   const [selectedMoods, setSelectedMoods] = useState<string[]>([]);
-  const [page, setPage] = useState(1);
-  const [hasMore, setHasMore] = useState(true);
   const [isEditMode, setIsEditMode] = useState(false);
-  const [stories, setStories] = useState<Story[]>(initialStories);
+
+  // 임시로 목데이터 사용 (추후 API 연동 시 주석 해제)
+  const [isLoading, setIsLoading] = useState(false);
+  
+  // 스토리 목록 쿼리 (API 연동 시 사용)
+  /*
+  const {
+    data,
+    fetchNextPage,
+    hasNextPage,
+    isFetchingNextPage,
+    isLoading: storiesLoading,
+    refetch
+  } = useInfiniteQuery<Story[], Error>({
+    queryKey: ['stories', 'main'],
+    queryFn: async ({ pageParam }) => {
+      const stories = await fetchMainStories(pageParam as number);
+      return stories.map(mapApiStoryToUiStory);
+    },
+    initialPageParam: 0,
+    getNextPageParam: (lastPage: Story[], allPages: Story[][]) => {
+      return lastPage.length === 0 ? undefined : allPages.length;
+    },
+    enabled: isAuthenticated,
+  });
+  */
 
   useEffect(() => {
-    if (!isLoading && !isAuthenticated) {
+    if (!authLoading && !isAuthenticated) {
       router.replace('/auth/login');
     }
-  }, [isAuthenticated, isLoading]);
+  }, [isAuthenticated, authLoading]);
+
+  // 모든 스토리 목록 (목데이터 사용)
+  const allStories = useMemo(() => {
+    return mockStories;
+  }, []);
 
   // 필터링된 스토리 목록
   const filteredStories = useMemo(() => {
-    let filtered = stories;
+    let filtered = allStories;
 
     // 즐겨찾기 필터
     if (filter === '즐겨찾기') {
@@ -65,7 +146,7 @@ export const useLibraryPage = () => {
     }
 
     return filtered;
-  }, [stories, filter, selectedGenres, selectedMoods]);
+  }, [allStories, filter, selectedGenres, selectedMoods]);
 
   // 정렬된 스토리 목록
   const sortedStories = useMemo(() => {
@@ -83,33 +164,20 @@ export const useLibraryPage = () => {
     }
   }, [filteredStories, sortOption]);
 
-  // 페이지네이션 (현재는 모든 데이터 반환, 향후 API 연동 시 수정)
-  const paginatedStories = useMemo(() => {
-    const itemsPerPage = 10;
-    const startIndex = (page - 1) * itemsPerPage;
-    return sortedStories.slice(startIndex, startIndex + itemsPerPage);
-  }, [sortedStories, page]);
-
   // 스토리 상세 페이지로 이동
   const handleStoryPress = useCallback((storyId: string) => {
     router.push(`/stories/${storyId}`);
   }, [router]);
 
-  // 즐겨찾기 토글
+  // 즐겨찾기 토글 (임시 구현)
   const handleFavoriteToggle = useCallback((storyId: string) => {
-    setStories(prevStories => 
-      prevStories.map(story => 
-        story.id === storyId 
-          ? { ...story, isFavorite: !story.isFavorite }
-          : story
-      )
-    );
+    // TODO: API 연동 시 서버에 즐겨찾기 상태 업데이트
+    Alert.alert('준비중', '즐겨찾기 기능은 준비중입니다.');
   }, []);
 
   // 필터 변경
   const handleFilterChange = useCallback((newFilter: Filter) => {
     setFilter(newFilter);
-    setPage(1); // 필터 변경 시 첫 페이지로
   }, []);
 
   // 정렬 변경
@@ -124,7 +192,6 @@ export const useLibraryPage = () => {
         ? prev.filter(g => g !== genre)
         : [...prev, genre]
     );
-    setPage(1);
   }, []);
 
   // 분위기 필터 변경
@@ -134,25 +201,16 @@ export const useLibraryPage = () => {
         ? prev.filter(m => m !== mood)
         : [...prev, mood]
     );
-    setPage(1);
   }, []);
 
-  // 무한 스크롤 (더 많은 데이터 로드)
+  // 무한 스크롤 (더 많은 데이터 로드) - 목데이터에서는 비활성화
   const handleLoadMore = useCallback(() => {
-    if (hasMore) {
-      setPage(prev => prev + 1);
-      // 실제 API 연동 시에는 여기서 데이터 로드
-      if (page >= 3) { // 목업 데이터 제한
-        setHasMore(false);
-      }
-    }
-  }, [hasMore, page]);
+    // 목데이터 사용 중이므로 추가 로드 없음
+  }, []);
 
-  // 새로고침
+  // 새로고침 - 목데이터에서는 비활성화
   const handleRefresh = useCallback(() => {
-    setPage(1);
-    setHasMore(true);
-    // 실제 API 연동 시에는 여기서 데이터 새로고침
+    // 목데이터 사용 중이므로 새로고침 없음
   }, []);
 
   // 수정 모드 토글
@@ -160,7 +218,7 @@ export const useLibraryPage = () => {
     setIsEditMode(prev => !prev);
   }, []);
 
-  // 스토리 삭제
+  // 스토리 삭제 (임시 구현)
   const handleStoryDelete = useCallback((storyId: string) => {
     Alert.alert(
       '동화 삭제',
@@ -171,10 +229,8 @@ export const useLibraryPage = () => {
           text: '삭제', 
           style: 'destructive',
           onPress: () => {
-            // 상태에서 삭제
-            setStories(prevStories => prevStories.filter(story => story.id !== storyId));
-            // 실제 API 연동 시에는 여기서 삭제 API 호출 후 상태 업데이트
-            Alert.alert('삭제 완료', '동화가 삭제되었습니다.');
+            // TODO: API 연동 시 서버에서 삭제 후 상태 업데이트
+            Alert.alert('준비중', '삭제 기능은 준비중입니다.');
           }
         }
       ]
@@ -184,13 +240,13 @@ export const useLibraryPage = () => {
   return {
     // 상태
     isAuthenticated,
-    isLoading,
+    isLoading: authLoading || isLoading,
     filter,
     sortOption,
     selectedGenres,
     selectedMoods,
-    stories: paginatedStories,
-    hasMore,
+    stories: sortedStories,
+    hasMore: false, // 목데이터 사용 중이므로 더 이상 로드할 데이터 없음
     isEditMode,
     
     // 핸들러
